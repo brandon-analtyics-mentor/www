@@ -1,4 +1,69 @@
- <h1>Employee Salary Category Analysis</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Salary Category Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            margin-top: 25px;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            overflow: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f8f8;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .explanation {
+            background-color: #e7f4ff;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- delete above for embedded code --> 
+
+
+    <h1>Employee Salary Category Analysis</h1>
     
     <div class="section">
         <h2>Problem Description</h2>
@@ -87,7 +152,7 @@ INSERT INTO Employees (employee_id, annual_salary) VALUES
     <div class="section">
         <h2>Solutions</h2>
         
-        <h3>Solution 1: Using CASE statements with COUNT</h3>
+        <h4>Solution 1: Using CASE statements with COUNT</h4>
         <pre>
 SELECT 
     category,
@@ -131,7 +196,7 @@ WHERE NOT EXISTS (
     SELECT 1 FROM Employees WHERE annual_salary > 70000
 );</pre>
         
-        <h3>Solution 2: Using COALESCE with conditional COUNT</h3>
+        <h4>Solution 2: Using COALESCE with conditional COUNT</h4>
         <pre>
 WITH categories AS (
     SELECT 'Entry Level' AS category
@@ -157,7 +222,7 @@ SELECT
 FROM categories c
 LEFT JOIN counts ON c.category = counts.category;</pre>
         
-        <h3>Solution 3: Using filtered COUNT() functions</h3>
+        <h4>Solution 3: Using filtered COUNT() functions</h4>
         <pre>
 SELECT
     'Entry Level' AS category,
@@ -178,3 +243,9 @@ SELECT
     COUNT(CASE WHEN annual_salary > 70000 THEN 1 END) AS accounts
 FROM Employees;</pre>
     </div>
+
+
+
+<!-- delete below for embedded code --> 
+</body>
+</html>
