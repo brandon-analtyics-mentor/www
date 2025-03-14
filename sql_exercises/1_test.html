@@ -1,8 +1,9 @@
 
-    <h1>Employee Salary Category Analysis</h1>
+
+    <h2>Employee Salary Category Analysis</h2>
     
     <div class="section">
-        <h2>Problem Description</h2>
+        <h3>Problem Description</h3>
         <p>Table: <code>Employees</code></p>
         <pre>
 +---------------+------+
@@ -27,7 +28,7 @@
     </div>
     
     <div class="section">
-        <h2>Example</h2>
+        <h3>Example</h3>
         
         <p><strong>Input:</strong><br>Employees table:</p>
         <pre>
@@ -65,7 +66,7 @@
     </div>
     
     <div class="section">
-        <h2>PostgreSQL Setup Code</h2>
+        <h3>PostgreSQL Setup Code</h3>
         <pre>
 -- Create the Employees table
 CREATE TABLE Employees (
@@ -86,7 +87,7 @@ INSERT INTO Employees (employee_id, annual_salary) VALUES
     </div>
     
     <div class="section">
-        <h2>Solutions</h2>
+        <h3>Solutions</h3>
         
         <h4>Solution 1: Using CASE statements with COUNT</h4>
         <pre>
@@ -179,3 +180,6 @@ SELECT
     COUNT(CASE WHEN annual_salary > 70000 THEN 1 END) AS accounts
 FROM Employees;</pre>
     </div>
+
+
+
