@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Salary Category Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #3498db;
+            margin-top: 25px;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            overflow: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f8f8f8;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .explanation {
+            background-color: #e7f4ff;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Employee Salary Category Analysis</h1>
+    
+    <div class="section">
+        <h2>Problem Description</h2>
+        <p>Table: <code>Employees</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| employee_id   | int  |
+| annual_salary | int  |
++---------------+------+</pre>
+        
+        <p><code>employee_id</code> is the primary key (column with unique values) for this table.<br>
+        Each row contains information about the annual salary for one company employee.</p>
+        
+        <p>Write a solution to calculate the number of employees for each salary category. The salary categories are:</p>
+        <ul>
+            <li><code>"Entry Level"</code>: All the salaries <strong>strictly less</strong> than <code>$30000</code>.</li>
+            <li><code>"Mid Level"</code>: All the salaries in the <strong>inclusive</strong> range <code>[$30000, $70000]</code>.</li>
+            <li><code>"Senior Level"</code>: All the salaries <strong>strictly greater</strong> than <code>$70000</code>.</li>
+        </ul>
+        
+        <p>The result table <strong>must</strong> contain all three categories. If there are no employees in a category, return <code>0</code>.<br>
+        Return the result table in <strong>any order</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h2>Example</h2>
+        
+        <p><strong>Input:</strong><br>Employees table:</p>
+        <pre>
++-------------+---------------+
+| employee_id | annual_salary |
++-------------+---------------+
+| 1           | 25000         |
+| 2           | 45000         |
+| 3           | 30000         |
+| 4           | 80000         |
+| 5           | 22000         |
+| 6           | 95000         |
+| 7           | 70000         |
+| 8           | 29999         |
++-------------+---------------+</pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++---------------+-------------+
+| category      | accounts    |
++---------------+-------------+
+| Entry Level   | 3           |
+| Mid Level     | 3           |
+| Senior Level  | 2           |
++---------------+-------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>Employees with IDs 1, 5, and 8 have salaries less than $30000, so they are in the "Entry Level" category.</li>
+                <li>Employees with IDs 2, 3, and 7 have salaries between $30000 and $70000 (inclusive), so they are in the "Mid Level" category.</li>
+                <li>Employees with IDs 4 and 6 have salaries greater than $70000, so they are in the "Senior Level" category.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>PostgreSQL Setup Code</h2>
+        <pre>
+-- Create the Employees table
+CREATE TABLE Employees (
+    employee_id INT PRIMARY KEY,
+    annual_salary INT
+);
+
+-- Insert example data
+INSERT INTO Employees (employee_id, annual_salary) VALUES
+(1, 25000),
+(2, 45000),
+(3, 30000),
+(4, 80000),
+(5, 22000),
+(6, 95000),
+(7, 70000),
+(8, 29999);</pre>
+    </div>
+    
+    <div class="section">
+        <h2>Solutions</h2>
+        
+        <h3>Solution 1: Using CASE statements with COUNT</h3>
+        <pre>
+SELECT 
+    category,
+    COUNT(employee_id) AS accounts
+FROM (
+    SELECT 
+        employee_id,
+        CASE 
+            WHEN annual_salary < 30000 THEN 'Entry Level'
+            WHEN annual_salary BETWEEN 30000 AND 70000 THEN 'Mid Level'
+            ELSE 'Senior Level'
+        END AS category
+    FROM Employees
+) AS categorized_employees
+GROUP BY category
+
+UNION ALL
+
+SELECT 
+    'Entry Level' AS category,
+    0 AS accounts
+WHERE NOT EXISTS (
+    SELECT 1 FROM Employees WHERE annual_salary < 30000
+)
+
+UNION ALL
+
+SELECT 
+    'Mid Level' AS category,
+    0 AS accounts
+WHERE NOT EXISTS (
+    SELECT 1 FROM Employees WHERE annual_salary BETWEEN 30000 AND 70000
+)
+
+UNION ALL
+
+SELECT 
+    'Senior Level' AS category,
+    0 AS accounts
+WHERE NOT EXISTS (
+    SELECT 1 FROM Employees WHERE annual_salary > 70000
+);</pre>
+        
+        <h3>Solution 2: Using COALESCE with conditional COUNT</h3>
+        <pre>
+WITH categories AS (
+    SELECT 'Entry Level' AS category
+    UNION ALL
+    SELECT 'Mid Level' AS category
+    UNION ALL
+    SELECT 'Senior Level' AS category
+),
+counts AS (
+    SELECT
+        CASE 
+            WHEN annual_salary < 30000 THEN 'Entry Level'
+            WHEN annual_salary BETWEEN 30000 AND 70000 THEN 'Mid Level'
+            ELSE 'Senior Level'
+        END AS category,
+        COUNT(*) AS accounts
+    FROM Employees
+    GROUP BY category
+)
+SELECT
+    c.category,
+    COALESCE(counts.accounts, 0) AS accounts
+FROM categories c
+LEFT JOIN counts ON c.category = counts.category;</pre>
+        
+        <h3>Solution 3: Using filtered COUNT() functions</h3>
+        <pre>
+SELECT
+    'Entry Level' AS category,
+    COUNT(CASE WHEN annual_salary < 30000 THEN 1 END) AS accounts
+FROM Employees
+
+UNION ALL
+
+SELECT
+    'Mid Level' AS category,
+    COUNT(CASE WHEN annual_salary BETWEEN 30000 AND 70000 THEN 1 END) AS accounts
+FROM Employees
+
+UNION ALL
+
+SELECT
+    'Senior Level' AS category,
+    COUNT(CASE WHEN annual_salary > 70000 THEN 1 END) AS accounts
+FROM Employees;</pre>
+    </div>
+</body>
+</html>
