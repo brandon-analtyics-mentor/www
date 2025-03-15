@@ -1,0 +1,139 @@
+<h2>Finding Duplicate Phone Numbers</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Contact</code></p>
+        <pre>
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| contact_id  | int     |
+| phone       | varchar |
++-------------+---------+
+        </pre>
+        
+        <p><code>contact_id</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table contains a phone number. The phone numbers will be in a standardized format.</p>
+        
+        <p>Write a solution to report all the duplicate phone numbers. Note that it's guaranteed that the phone field is not NULL.<br>
+        Return the result table in <strong>any order</strong>.<br>
+        The result format is in the following example.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Contact table:</p>
+        <pre>
++------------+-------------+
+| contact_id | phone       |
++------------+-------------+
+| 101        | 555-123-4567|
+| 102        | 555-987-6543|
+| 103        | 555-123-4567|
+| 104        | 555-345-6789|
+| 105        | 555-987-6543|
++------------+-------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++-------------+
+| Phone       |
++-------------+
+| 555-123-4567|
+| 555-987-6543|
++-------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong> Both 555-123-4567 and 555-987-6543 appear more than once in the table.</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the Contact table
+CREATE TABLE Contact (
+    contact_id INT PRIMARY KEY,
+    phone VARCHAR(15) NOT NULL
+);
+
+-- Insert example data
+INSERT INTO Contact (contact_id, phone) VALUES
+(101, '555-123-4567'),
+(102, '555-987-6543'),
+(103, '555-123-4567'),
+(104, '555-345-6789'),
+(105, '555-987-6543');</pre>
+    </div>
+    
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using GROUP BY and HAVING</h4>
+        <pre>
+select 
+  c.phone as "Phone"
+
+from 
+  contact c
+
+group by
+  c.phone
+
+having
+  count(c.phone) > 1
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 1:</strong></p>
+            <p>This solution groups the records by phone number using GROUP BY and then uses the HAVING clause to filter only those groups that have more than one record. This is a straightforward and efficient approach for finding duplicate values in a database.</p>
+        </div>
+
+        <h4>Solution 2: Using a self-join</h4>
+        <pre>
+select 
+    distinct c1.phone as "Phone"
+from
+  contact c1
+    join contact c2
+       on c1.phone = c2.phone
+where
+  c1.contact_id <> c2.contact_id
+  ;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 2:</strong></p>
+            <p>This solution uses a self-join to compare each record with all other records in the same table. We join the table to itself on matching phone numbers, but exclude pairs where the contact_id is the same. The DISTINCT keyword ensures we only get unique phone numbers in our result.</p>
+        </div>
+
+        <h4>Solution 3: Using window functions</h4>
+        <pre>
+with phone_counts as (
+  select 
+      c.phone
+    , count(1) over (partition by c.phone) as count
+  
+  from 
+    contact c
+)
+
+select 
+    distinct c.phone as "Phone"
+
+from
+  phone_counts c
+
+where 
+  c.count > 1
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 3:</strong></p>
+            <p>This solution uses a window function to count occurrences of each phone number. The COUNT(*) OVER (PARTITION BY phone) creates a count for each phone number group without actually grouping the results. We then filter for phone numbers with a count greater than 1 in the outer query.</p>
+        </div>
+    </div>

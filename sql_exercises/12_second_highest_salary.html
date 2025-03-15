@@ -1,0 +1,178 @@
+
+    <h2>Second Highest Salary</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Product</code></p>
+        <pre>
++-------------+------+
+| Column Name | Type |
++-------------+------+
+| code        | int  |
+| price       | int  |
++-------------+------+
+        </pre>
+        
+        <p><code>code</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table contains information about the price of a product.</p>
+        
+        <p>Write a solution to find the second highest <strong>distinct</strong> price from the <code>Product</code> table. If there is no second highest price, return <code>null</code> (return None in Pandas).</p>
+        <p>The result format is in the following examples.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example 1</h3>
+        
+        <p><strong>Input:</strong><br>Product table:</p>
+        <table>
+            <tr>
+                <th>code</th>
+                <th>price</th>
+            </tr>
+            <tr>
+                <td>101</td>
+                <td>500</td>
+            </tr>
+            <tr>
+                <td>102</td>
+                <td>750</td>
+            </tr>
+            <tr>
+                <td>103</td>
+                <td>1000</td>
+            </tr>
+        </table>
+        
+        <p><strong>Output:</strong></p>
+        <table>
+            <tr>
+                <th>SecondHighestPrice</th>
+            </tr>
+            <tr>
+                <td>750</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div class="section">
+        <h3>Example 2</h3>
+        
+        <p><strong>Input:</strong><br>Product table:</p>
+        <table>
+            <tr>
+                <th>code</th>
+                <th>price</th>
+            </tr>
+            <tr>
+                <td>101</td>
+                <td>500</td>
+            </tr>
+        </table>
+        
+        <p><strong>Output:</strong></p>
+        <table>
+            <tr>
+                <th>SecondHighestPrice</th>
+            </tr>
+            <tr>
+                <td>null</td>
+            </tr>
+        </table>
+    </div>
+    
+
+         <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create Product table
+CREATE TABLE Product (
+    code INT PRIMARY KEY,
+    price INT
+);
+
+-- Insert sample data for Example 1
+INSERT INTO Product (code, price)
+VALUES
+    (101, 500),
+    (102, 750),
+    (103, 1000);
+
+</pre>
+    </div>
+
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using subquery with LIMIT and OFFSET</h4>
+        <pre>
+select 
+    (
+      select
+        distinct 
+          p.price
+      
+      from
+        product p
+      
+      order by
+        p.price desc
+     
+      limit 1 
+      offset 1
+    ) as second_highest_price
+;
+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation 1:</strong></p>
+            <p>This solution uses a subquery to select distinct prices ordered by descending order, and then uses LIMIT 1 OFFSET 1 to get the second highest price. If there is no second highest price, the subquery returns NULL.</p>
+        </div>
+        
+        <h4>Solution 2: Using MAX function</h4>
+        <pre>
+select 
+    max(p.price) as second_highest_price
+
+from 
+  product p
+
+where 
+  p.price < (select max(price) from product)
+;
+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation 2:</strong></p>
+            <p>This solution finds the maximum price first using a subquery, then finds the maximum price that is less than that first maximum. If there is no price less than the maximum (i.e., all prices are the same), it returns NULL.</p>
+        </div>
+        
+        <h4>Solution 3: Using window function</h4>
+        <pre>
+with ranked_prices as (
+  select 
+      p.price
+    , dense_rank() over (order by p.price desc) as price_rank
+  
+  from 
+    product p
+)
+
+select 
+  case 
+      when max(price_rank) >= 2 then 
+        (select price from ranked_prices where price_rank = 2)
+      else 
+        null
+    end as second_highest_price
+from 
+    ranked_prices
+;
+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation 3:</strong></p>
+            <p>This solution uses a window function DENSE_RANK() to assign ranks to prices in descending order. It then checks if there is a price with rank 2 (the second highest). If not, it returns NULL. This approach handles duplicate prices correctly by using DENSE_RANK() instead of ROW_NUMBER().</p>
+        </div>
+    </div>
+

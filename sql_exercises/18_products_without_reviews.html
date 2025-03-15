@@ -1,0 +1,198 @@
+<h2>Finding Products Without Reviews</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Write an SQL query to find all products that have never been reviewed.</p>
+        
+        <p>Tables:</p>
+        
+        <p>Products</p>
+        <pre>
++-------------+----------+
+| Column Name | Type     |
++-------------+----------+
+| product_id  | int      |
+| title       | varchar  |
+| price       | decimal  |
++-------------+----------+
+        </pre>
+        
+        <p><strong>Note:</strong> <code>product_id</code> is the primary key for this table.<br>
+        Each row of this table indicates the ID, title, and price of a product.</p>
+        
+        <p>Reviews</p>
+        <pre>
++-------------+----------+
+| Column Name | Type     |
++-------------+----------+
+| review_id   | int      |
+| product_id  | int      |
+| rating      | int      |
++-------------+----------+
+        </pre>
+        
+        <p><strong>Note:</strong> <code>review_id</code> is the primary key for this table.<br>
+        <code>product_id</code> is a foreign key to <code>product_id</code> from the Products table.<br>
+        Each row of this table indicates the ID of a review, the product being reviewed, and the rating given (1-5).</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Products table:</p>
+        <pre>
++------------+------------------+-------+
+| product_id | title            | price |
++------------+------------------+-------+
+| 101        | Laptop Pro       | 1299  |
+| 102        | Wireless Earbuds | 89    |
+| 103        | Smart Watch      | 199   |
+| 104        | Bluetooth Speaker| 59    |
++------------+------------------+-------+
+        </pre>
+        
+        <p>Reviews table:</p>
+        <pre>
++-----------+------------+--------+
+| review_id | product_id | rating |
++-----------+------------+--------+
+| 1001      | 101        | 4      |
+| 1002      | 103        | 5      |
+| 1003      | 101        | 3      |
++-----------+------------+--------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++--------------------+
+| UnreviewedProducts |
++--------------------+
+| Wireless Earbuds   |
+| Bluetooth Speaker  |
++--------------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>Products with ID 102 (Wireless Earbuds) and 104 (Bluetooth Speaker) have no reviews in the Reviews table.</li>
+                <li>Products with ID 101 (Laptop Pro) and 103 (Smart Watch) have reviews, so they are not included in the result.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the Products table
+CREATE TABLE Products (
+    product_id INT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL
+);
+
+-- Create the Reviews table with a foreign key reference to Products
+CREATE TABLE Reviews (
+    review_id INT PRIMARY KEY,
+    product_id INT NOT NULL,
+    rating INT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    FOREIGN KEY (product_id) REFERENCES Products(product_id)
+);
+
+-- Insert sample data into Products table
+INSERT INTO Products (product_id, title, price)
+VALUES
+    (101, 'Laptop Pro', 1299),
+    (102, 'Wireless Earbuds', 89),
+    (103, 'Smart Watch', 199),
+    (104, 'Bluetooth Speaker', 59);
+
+-- Insert sample data into Reviews table
+INSERT INTO Reviews (review_id, product_id, rating)
+VALUES
+    (1001, 101, 4),
+    (1002, 103, 5),
+    (1003, 101, 3);</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to find all products that have never been reviewed. This means finding products in the Products table that don't have any corresponding entries in the Reviews table.
+    </p>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using LEFT JOIN</h4>
+        <pre>
+select 
+  p.title as "unreviewedproducts"
+
+from
+  products p
+    
+    left join reviews r
+       on p.product_id = r.product_id
+
+where
+  r.review_id is null
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 1:</strong></p>
+            <p>
+            This solution uses a LEFT JOIN to include all products from the Products table and match them with reviews from the Reviews table. The WHERE clause filters to keep only the products where no matching review was found (indicated by r.review_id IS NULL).
+            </p>
+        </div>
+
+        <h4>Solution 2: Using NOT IN</h4>
+        <pre>
+select
+  p.title as "unreviewedproducts"
+
+from
+  products p
+
+where
+  pproduct_id not in (
+                      select
+                        r.product_id
+                      from
+                        reviews r
+                    )
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 2:</strong></p>
+            <p>
+            This solution uses a subquery with NOT IN to find products whose IDs are not present in the Reviews table. It selects all product_ids from the Reviews table and then returns products that are not in that list. While this solution works, is it generally not a best practice to use "not in" when comparing one table to a potententially a long list in another table. A left join would have been preferred.
+            </p>
+        </div>
+
+        <h4>Solution 3: Using NOT EXISTS</h4>
+        <pre>
+select 
+  p.title as "unreviewedproducts"
+
+from
+  products p
+
+where not exists (
+                    select
+                      1
+                    from
+                      reviews r
+                    where
+                      r.product_id = p.product_id
+                  )
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 3:</strong></p>
+            <p>
+            This solution uses NOT EXISTS with a correlated subquery. For each product in the Products table, it checks if there exists any review with a matching product_id. If no such review exists, the product is included in the results.
+            </p>
+        </div>
+    </div>

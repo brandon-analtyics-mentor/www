@@ -1,0 +1,217 @@
+<h2>Remove Duplicate User Accounts</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>UserAccount</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| account_id    | int  |
+| username      | varchar |
++---------------+------+
+        </pre>
+        
+        <p><code>account_id</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table contains a username. The usernames will be all lowercase.</p>
+        
+        <p>Write a solution to <strong>delete</strong> all duplicate usernames, keeping only one unique username with the smallest <code>account_id</code>.</p>
+    
+        <p>For SQL users, please note that you are supposed to write a <code>DELETE</code> statement and not a <code>SELECT</code> one.</p>
+        
+        <p>After running your script, the answer shown is the <code>UserAccount</code> table. The driver will first compile and run your piece of code and then show the <code>UserAccount</code> table. The final order of the <code>UserAccount</code> table <strong>does not matter</strong>.</p>
+        
+        <p>The result format is in the following example.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>UserAccount table:</p>
+        <pre>
++-------------+---------------+
+| account_id  | username      |
++-------------+---------------+
+| 101         | alex23        |
+| 203         | maria_smith   |
+| 305         | alex23        |
+| 410         | taylor_dev    |
+| 511         | maria_smith   |
++-------------+---------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++-------------+---------------+
+| account_id  | username      |
++-------------+---------------+
+| 101         | alex23        |
+| 203         | maria_smith   |
+| 410         | taylor_dev    |
++-------------+---------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>alex23 appears twice (account_id 101 and 305). We keep the row with the smallest account_id = 101.</li>
+                <li>maria_smith appears twice (account_id 203 and 511). We keep the row with the smallest account_id = 203.</li>
+                <li>taylor_dev appears only once, so it is kept.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the useraccount table
+create table useraccount (
+    account_id int primary key,
+    username varchar
+);
+
+-- insert example data
+insert into useraccount (account_id, username) values
+(101, 'alex23'),
+(203, 'maria_smith'),
+(305, 'alex23'),
+(410, 'taylor_dev'),
+(511, 'maria_smith');
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Identify all duplicate usernames in the UserAccount table</li>
+            <li>For each set of duplicates, keep only the row with the smallest account_id</li>
+            <li>Delete all other duplicate rows</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use a subquery to identify the duplicate rows we want to delete. We'll find all account_ids that have the same username but not the minimum account_id for that username.</p>
+
+      <p>This approach requires us to first identify all usernames that appear more than once, then find the minimum account_id for each of these usernames, and finally delete all rows where the account_id is not the minimum for that username.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use a Common Table Expression (CTE) to rank each username occurrence by account_id, then delete all rows where the rank is greater than 1.</p>
+
+      <p>This approach uses window functions to assign a rank to each row within the partition of its username, ordered by account_id. Then we delete all rows where the rank is not 1, which means keeping only the row with the smallest account_id for each username.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using Subquery to Find Duplicates</h4>
+        <pre>
+delete from useraccount
+where 
+  account_id in (
+                  select 
+                    ua.account_id
+                  
+                  from 
+                    useraccount ua
+                    
+                      join (
+                              select
+                                  u.username
+                                , min(u.account_id) as min_id
+                              
+                              from
+                                useraccount u
+                              
+                              group by
+                                u.username
+
+                              having 
+                                count(*) > 1
+                            ) d
+                        on ua.username = d.username
+                  where
+                    ua.account_id > d.min_id
+                )
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution works by first finding all usernames that appear more than once using a GROUP BY with HAVING COUNT(*) > 1. For each of these duplicate usernames, we find the minimum account_id. Then we delete all rows where the account_id is not the minimum for that username.</p>
+
+    <p>Notice that this query only targets duplicates, leaving unique username entries untouched. This makes the query efficient since it only processes the rows it needs to delete.</p>
+</div>
+
+        <h4>Solution 2: Using Window Functions for Ranking</h4>
+        <pre>
+delete from useraccount
+where 
+  account_id in (
+                  select
+                    r.account_id
+
+                  from (
+                          select
+                              u.account_id 
+                            , row_number() over (partition by u.username order by u.account_id) as rank
+                          from
+                            useraccount u
+                        ) r
+
+                  where
+                    r.rank > 1
+                )
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses the ROW_NUMBER() window function to assign a rank to each row within its username partition, ordered by account_id. The first occurrence of each username (with the smallest account_id) gets rank 1, and subsequent occurrences get higher ranks.</p>
+
+    <p>We then delete all rows where the rank is greater than 1, which means we keep only the row with the smallest account_id for each username.</p>
+</div>
+
+        <h4>Solution 3: Using a CTE with Self-Join</h4>
+        <pre>
+with duplicate_accounts as (
+  select
+    ua1.account_id
+  
+  from
+    useraccount ua1
+      
+      join useraccount ua2
+         on ua1.username = ua2.username
+  where
+    ua1.account_id > ua2.account_id
+)
+
+delete from useraccount
+where 
+  account_id in (
+                  select
+                    d.account_id 
+                  from
+                    duplicate_accounts d
+                )
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a self-join to find all pairs of rows with the same username. For each pair, we identify the row with the larger account_id as the one to delete.</p>
+
+    <p>The CTE (Common Table Expression) named DuplicateAccounts collects all account_ids that should be deleted. Then, we delete all rows where the account_id is in this list.</p>
+
+    <p>This approach is straightforward and works well for moderate-sized datasets, though it might be less efficient for very large tables due to the self-join operation.</p>
+</div>
+
+    </div> <!-- solutions section -->

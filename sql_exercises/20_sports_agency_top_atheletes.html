@@ -1,0 +1,295 @@
+<h2>Sports Agency Top-Paid Athletes</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>
+            A sports agency wants to identify their highest-paid athletes in each sport category. 
+            A <strong>top-paid athlete</strong> in a sport is an athlete who has a compensation in the <strong>top three unique</strong> 
+            compensation amounts for that sport.
+        </p>
+        <p>
+            Write a SQL solution to find the athletes who are <strong>top-paid</strong> in each of the sports.
+        </p>
+    </div>
+
+    <div class="section">
+        <h3>Table Structure</h3>
+        
+        <p>Table: <code>Athlete</code></p>
+        <pre>
++---------------+------+-------------------------+
+| Column Name   | Type | Description             |
++---------------+------+-------------------------+
+| player_id     | int  | Primary key             |
+| player_name   | varchar | Name of the athlete  |
+| compensation  | int  | Annual compensation amount |
+| sport_id      | int  | Foreign key referencing the Sport table |
++---------------+------+-------------------------+
+        </pre>
+        
+        <p>Table: <code>Sport</code></p>
+        <pre>
++---------------+------+-------------------------+
+| Column Name   | Type | Description             |
++---------------+------+-------------------------+
+| sport_id      | int  | Primary key             |
+| sport_name    | varchar | Name of the sport    |
++---------------+------+-------------------------+
+        </pre>
+    </div>
+    
+    <div class="section">
+        <h3>Example Data</h3>
+        
+        <p><strong>Athlete Table:</strong></p>
+        <pre>
++------------+-------------+---------------+------------+
+| player_id  | player_name | compensation  | sport_id   |
++------------+-------------+---------------+------------+
+| 1          | Michael     | 450000        | 1          |
+| 2          | Jessica     | 375000        | 2          |
+| 3          | Carlos      | 310000        | 2          |
+| 4          | Serena      | 490000        | 1          |
+| 5          | Emma        | 350000        | 1          |
+| 6          | Rafael      | 450000        | 1          |
+| 7          | Andre       | 330000        | 1          |
+| 8          | Lionel      | 390000        | 2          |
+| 9          | Simone      | 420000        | 3          |
+| 10         | Usain       | 395000        | 3          |
++------------+-------------+---------------+------------+
+        </pre>
+        
+        <p><strong>Sport Table:</strong></p>
+        <pre>
++------------+-------------+
+| sport_id   | sport_name  |
++------------+-------------+
+| 1          | Tennis      |
+| 2          | Soccer      |
+| 3          | Track       |
++------------+-------------+
+        </pre>
+        
+        <p><strong>Expected Output:</strong></p>
+        <pre>
++------------+-------------+---------------+
+| Sport      | Athlete     | Compensation  |
++------------+-------------+---------------+
+| Tennis     | Serena      | 490000        |
+| Tennis     | Michael     | 450000        |
+| Tennis     | Rafael      | 450000        |
+| Tennis     | Andre       | 330000        |
+| Soccer     | Lionel      | 390000        |
+| Soccer     | Jessica     | 375000        |
+| Soccer     | Carlos      | 310000        |
+| Track      | Simone      | 420000        |
+| Track      | Usain       | 395000        |
++------------+-------------+---------------+
+        </pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <p>
+                <strong>In the Tennis sport:</strong>
+            </p>
+            <ul>
+                <li>Serena earns the highest unique compensation (490000)</li>
+                <li>Both Michael and Rafael earn the second-highest unique compensation (450000)</li>
+                <li>Andre earns the third-highest unique compensation (330000)</li>
+                <li>Emma earns the fourth-highest unique compensation (350000), which is not in the top three, so she's not included</li>
+            </ul>
+            
+            <p>
+                <strong>In the Soccer sport:</strong>
+            </p>
+            <ul>
+                <li>Lionel earns the highest unique compensation (390000)</li>
+                <li>Jessica earns the second-highest unique compensation (375000)</li>
+                <li>Carlos earns the third-highest unique compensation (310000)</li>
+            </ul>
+            
+            <p>
+                <strong>In the Track sport:</strong>
+            </p>
+            <ul>
+                <li>Simone earns the highest unique compensation (420000)</li>
+                <li>Usain earns the second-highest unique compensation (395000)</li>
+                <li>There is no third-highest unique compensation as there are only two athletes in this category</li>
+            </ul>
+            
+            <p><strong>Note:</strong> There are no athletes with the same name, compensation, and sport.</p>
+        </div>
+    </div>
+    
+     <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the sport table
+create table sport (
+    sport_id int primary key,
+    sport_name varchar(50) not null
+);
+
+-- create the athlete table
+create table athlete (
+    player_id int primary key,
+    player_name varchar(50) not null,
+    compensation int not null,
+    sport_id int not null,
+    foreign key (sport_id) references sport(sport_id)
+);
+
+-- insert data into sport table
+insert into sport (sport_id, sport_name) values
+(1, 'tennis'),
+(2, 'soccer'),
+(3, 'track');
+
+-- insert data into athlete table
+insert into athlete (player_id, player_name, compensation, sport_id) values
+(1, 'michael', 450000, 1),
+(2, 'jessica', 375000, 2),
+(3, 'carlos', 310000, 2),
+(4, 'serena', 490000, 1),
+(5, 'emma', 350000, 1),
+(6, 'rafael', 450000, 1),
+(7, 'andre', 330000, 1),
+(8, 'lionel', 390000, 2),
+(9, 'simone', 420000, 3),
+(10, 'usain', 395000, 3);
+
+</pre>
+    </div>
+
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to find the athletes with the top three unique compensation amounts in each sport.
+    </p>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using DENSE_RANK() Window Function</h4>
+        <pre>
+select 
+    s.sport_name as "sport"
+  , a.player_name as "athlete"
+  , a.compensation as "compensation"
+
+from 
+    (
+      select 
+        , a.player_id
+        . a.player_name
+        , a.compensation
+        , a.sport_id
+        , dense_rank() over (
+              partition by a.sport_id 
+              order by a.compensation desc
+          ) as compensation_rank
+      from 
+          athlete a
+    ) a
+    
+    join sport s 
+       on a.sport_id = s.sport_id
+
+where 
+    a.compensation_rank <= 3
+
+order by 
+    s.sport_name
+  , a.compensation desc
+;
+        </pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 1:</strong></p>
+            <p>
+            This solution uses the DENSE_RANK() window function to rank athletes within each sport by their compensation in descending order. The DENSE_RANK() function assigns the same rank to athletes with the same compensation, which is important for our problem since we're looking for top three unique compensation amounts. We then filter to include only those with a rank of 3 or less.
+            </p>
+        </div>
+        
+        <h4>Solution 2: Using a Correlated Subquery</h4>
+        <pre>
+select 
+    s.sport_name as "sport",
+  , a.player_name as "athlete"
+  , a.compensation as "compensation"
+
+from 
+    athlete a
+      
+      join sport s
+         on a.sport_id = s.sport_id
+
+where 
+    (
+        select
+            count(distinct a2.compensation)
+        from
+          athlete a2
+        where
+              1=1
+          and a2.sport_id = a.sport_id
+          and a2.compensation >= a.compensation
+    ) <= 3
+
+order by 
+    s.sport_name
+  , a.compensation desc
+;
+        </pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 2:</strong></p>
+            <p>
+            This solution uses a correlated subquery that counts the number of distinct compensation amounts that are greater than or equal to each athlete's compensation within the same sport. If this count is less than or equal to 3, then the athlete has one of the top three unique compensation amounts in their sport.
+            </p>
+        </div>
+        
+        <h4>Solution 3: Using a Common Table Expression (CTE)</h4>
+        <pre>
+with ranked_athletes as (
+  select 
+      a.player_id
+    , a.player_name
+    , a.compensation
+    , a.sport_id
+    , s.sport_name
+    , dense_rank() over (
+          partition by a.sport_id 
+          order by a.compensation desc
+      ) as compensation_rank
+  from 
+      athlete a
+      
+        join sport s
+           on a.sport_id = s.sport_id
+)
+
+select 
+    sport_name as "sport"
+  , player_name as "athlete"
+  , compensation as "compensation"
+
+from 
+    ranked_athletes r
+
+where 
+    r.compensation_rank <= 3
+
+order by 
+    r.sport_name
+  , r.compensation desc
+;
+        </pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 3:</strong></p>
+            <p>
+            This solution is similar to Solution 1 but uses a Common Table Expression (CTE) for better readability. It first creates a temporary result set with the ranked athletes, then filters and orders the results. The CTE approach makes the SQL more modular and easier to understand.
+            </p>
+        </div>
+    </div>

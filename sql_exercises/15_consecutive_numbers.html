@@ -1,0 +1,270 @@
+<h2>Consecutive Product Views</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>
+            In this challenge, you'll be working with data from an e-commerce website's product view logs.
+        </p>
+        
+        <p>Table: <code>ProductViews</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| view_id       | int  |
+| product_code  | varchar |
++---------------+------+
+        </pre>
+        
+        <p>
+            In this table, <code>view_id</code> is the primary key and an autoincrement column starting from 1.<br>
+            Each row represents a logged view of a product on an e-commerce website.
+        </p>
+        
+        <p>
+            Write a SQL query to find all product codes that have been viewed at least four times consecutively.<br>
+            Return the result table in any order.
+        </p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>ProductViews table:</p>
+        <pre>
++----------+-------------+
+| view_id  | product_code|
++----------+-------------+
+| 1        | A101        |
+| 2        | A101        |
+| 3        | A101        |
+| 4        | A101        |
+| 5        | B202        |
+| 6        | B202        |
+| 7        | B202        |
+| 8        | A101        |
+| 9        | C303        |
+| 10       | C303        |
+| 11       | C303        |
+| 12       | C303        |
+| 13       | C303        |
++----------+-------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++-----------------+
+| ConsecutiveViews|
++-----------------+
+| A101            |
+| C303            |
++-----------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>"A101" appears 4 times consecutively (view_id 1-4).</li>
+                <li>"C303" appears 5 times consecutively (view_id 9-13).</li>
+                <li>"B202" only appears 3 times consecutively, which is less than the required 4 times.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the ProductViews table
+CREATE TABLE ProductViews (
+    view_id SERIAL PRIMARY KEY,
+    product_code VARCHAR(10) NOT NULL
+);
+
+-- Insert sample data
+INSERT INTO ProductViews (product_code) VALUES
+('A101'),
+('A101'),
+('A101'),
+('A101'),
+('B202'),
+('B202'),
+('B202'),
+('A101'),
+('C303'),
+('C303'),
+('C303'),
+('C303'),
+('C303');</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we re-state what we are asked to do, at a very granular level.</p>
+        <ul>
+            <li>We need to find product codes that have been viewed at least four times consecutively.</li>
+            <li>The view_id column is sequential and can be used to determine if views are consecutive.</li>
+            <li>We need to return a list of unique product codes that meet the criteria.</li>
+        </ul>
+        Now that we are clear on what the request, we can break the problem down into steps to solve each one of these asks.
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1: Using Self-Joins</strong></p>
+      
+      <p>One approach is to use self-joins to find products that appear in four consecutive rows. We can join the ProductViews table with itself three more times, each time requiring that the view_id increases by 1 and the product_code remains the same.</p>
+
+      <p>This approach is straightforward and works well for smaller datasets, but it might not be very efficient for larger datasets. The join conditions ensure we're only matching consecutive views with the same product code.</p>
+
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2: Using Window Functions</strong></p>
+      
+      <p>We can use window functions to identify groups of consecutive product views. By using ROW_NUMBER() partitioned by product_code and subtracting it from view_id, we create a grouping identifier for consecutive views of the same product.</p>
+
+      <p>Then, we can count how many views are in each group and filter for those with at least 4 consecutive views. This approach is more scalable and can handle larger datasets efficiently.</p>
+
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 3: Using LAG Function</strong></p>
+      
+      <p>Another approach is to use the LAG window function to check if the previous three views have the same product_code as the current view. This allows us to directly identify views that are part of a sequence of at least 4 consecutive views of the same product.</p>
+
+      <p>This method is elegant and reads naturally - we're literally checking if the current product and the three previous products are the same. It can be very efficient for this specific use case.</p>
+ 
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using Self-Joins</h4>
+        <pre>
+select
+    distinct 
+      p1.product_code as consecutive_views
+
+from
+  productviews p1
+    
+    join productviews p2
+       on p2.view_id = p1.view_id + 1
+      and p2.product_code = p1.product_code
+
+    join productviews p3
+       on p3.view_id = p1.view_id + 2
+      and p3.product_code = p1.product_code
+
+    join productviews p4
+       on p4.view_id = p1.view_id + 3
+      and p4.product_code = p1.product_code
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution joins the ProductViews table with itself three times to find products that appear in four consecutive rows. For each row in p1, we're looking for matching rows in p2, p3, and p4 where:
+    <br>
+    - The view_id increases by exactly 1 each time (ensuring consecutive views)
+    <br>
+    - The product_code remains the same
+    <br>
+    The DISTINCT keyword ensures we only return each product code once, even if it has multiple sets of 4+ consecutive views.
+    </p>
+</div>
+
+        <h4>Solution 2: Using Window Functions</h4>
+        <pre>
+with consecutive_groups as (
+  select 
+      p.product_code
+    , p.view_id
+    , p.view_id - row_number() over (partition by p.product_code order by p.view_id) as grp
+  from
+    productviews p
+)
+
+select
+  distinct
+    product_code as consecutive_views
+
+from (
+        select 
+            g.product_code
+          , g.grp
+          , count(1) as consecutive_count
+        
+        from 
+          consecutive_groups g
+        
+        group by
+          g.product_code, grp
+
+        having 
+          count(*) >= 4
+      ) as grouped_views
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a clever technique with window functions:
+    <br>
+    1. In the ConsecutiveGroups CTE, we calculate a group identifier (grp) for consecutive views of the same product by subtracting the row number from the view_id.
+    <br>
+    2. When views are consecutive and for the same product, this calculation will yield the same value, forming a group.
+    <br>
+    3. We then count the number of records in each group and filter for those with at least 4 consecutive views.
+    <br>
+    4. Finally, we select the distinct product codes that meet our criteria.
+    </p>
+</div>
+
+        <h4>Solution 3: Using LAG Function</h4>
+        <pre>
+with product_sequence as (
+  select 
+      p.product_code
+    , p.view_id
+    , lag(p.product_code, 1) over (order by p.view_id) as prev1
+    , lag(p.product_code, 2) over (order by p.view_id) as prev2
+    , lag(p.product_code, 3) over (order by p.view_id) as prev3
+  from
+    productviews p
+)
+
+select 
+  distinct
+    s.product_code as consecutiveviews
+
+from
+  product_sequence s
+
+where 
+      1=1
+  and s.product_code = s.prev1 
+  and s.product_code = s.prev2
+  and s.product_code = s.prev3
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses the LAG window function to look back at previous rows:
+    <br>
+    1. In the ProductSequence CTE, we use LAG to access the product_code from the previous three rows for each current row.
+    <br>
+    2. The LAG function is ordered by view_id to ensure we're checking previous rows in sequence.
+    <br>
+    3. In the main query, we filter for rows where the current product_code matches all three previous product_codes.
+    <br>
+    4. This directly identifies products that have been viewed at least 4 times consecutively.
+    <br>
+    5. The DISTINCT keyword ensures each qualifying product is listed only once.
+    </p>
+</div>
+
+
+</div> <!-- solutions section -->

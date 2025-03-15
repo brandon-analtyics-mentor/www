@@ -1,0 +1,261 @@
+    <h2>Combine Two Tables</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Employee</code></p>
+        <pre>
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| employeeId  | int     |
+| surname     | varchar |
+| givenName   | varchar |
++-------------+---------+
+        </pre>
+        
+        <p><code>employeeId</code> is the primary key (column with unique values) for this table.<br>
+        This table contains information about employees including their ID and name details.</p>
+        
+        <p>Table: <code>Department</code></p>
+        <pre>
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| deptId      | int     |
+| employeeId  | int     |
+| building    | varchar |
+| floor       | varchar |
++-------------+---------+
+        </pre>
+        
+        <p><code>deptId</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table contains information about the building and floor where an employee with ID = employeeId works.</p>
+        
+        <p>Write a solution to report the given name, surname, building, and floor of each employee in the <code>Employee</code> table. If the department information of an <code>employeeId</code> is not present in the <code>Department</code> table, report <code>null</code> instead.</p>
+        <p>Return the result table in <strong>any order</strong>.</p>
+        <p>The result format is in the following example.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Employee table:</p>
+        <table>
+            <tr>
+                <th>employeeId</th>
+                <th>surname</th>
+                <th>givenName</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Garcia</td>
+                <td>Maria</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>Chen</td>
+                <td>Wei</td>
+            </tr>
+        </table>
+        
+        <p>Department table:</p>
+        <table>
+            <tr>
+                <th>deptId</th>
+                <th>employeeId</th>
+                <th>building</th>
+                <th>floor</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>2</td>
+                <td>East Campus</td>
+                <td>3</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>3</td>
+                <td>Tech Center</td>
+                <td>2</td>
+            </tr>
+        </table>
+        
+        <p><strong>Output:</strong></p>
+        <table>
+            <tr>
+                <th>givenName</th>
+                <th>surname</th>
+                <th>building</th>
+                <th>floor</th>
+            </tr>
+            <tr>
+                <td>Maria</td>
+                <td>Garcia</td>
+                <td>Null</td>
+                <td>Null</td>
+            </tr>
+            <tr>
+                <td>Wei</td>
+                <td>Chen</td>
+                <td>East Campus</td>
+                <td>3</td>
+            </tr>
+        </table>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <p>There is no department information in the department table for employeeId = 1 so we return null for their building and floor.<br>
+            deptId = 1 contains information about the department of employeeId = 2.</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the Employee table
+CREATE TABLE Employee (
+    employeeId INT PRIMARY KEY,
+    surname VARCHAR(255),
+    givenName VARCHAR(255)
+);
+
+-- Insert example data into Employee
+INSERT INTO Employee (employeeId, surname, givenName) VALUES
+(1, 'Garcia', 'Maria'),
+(2, 'Chen', 'Wei');
+
+-- Create the Department table
+CREATE TABLE Department (
+    deptId INT PRIMARY KEY,
+    employeeId INT,
+    building VARCHAR(255),
+    floor VARCHAR(50)
+);
+
+-- Insert example data into Department
+INSERT INTO Department (deptId, employeeId, building, floor) VALUES
+(1, 2, 'East Campus', '3'),
+(2, 3, 'Tech Center', '2');</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Get data from both the Employee and Department tables</li>
+            <li>Match employees with their department information when available</li>
+            <li>Return null for building and floor when an employee has no matching department record</li>
+        </ul>
+        This is a classic case for using a LEFT JOIN operation, which will keep all records from the Employee table regardless of whether they have a matching record in the Department table.
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1: Using LEFT JOIN</strong></p>
+      
+      <p>The most straightforward approach is to use a LEFT JOIN between the Employee and Department tables. This will return all employees from the Employee table along with their department information if available, or NULL if not.</p>
+
+      <p>A LEFT JOIN keeps all records from the left table (Employee) and matches them with records from the right table (Department) where possible. If no match is found, NULL values are returned for the right table's columns.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2: Using LEFT OUTER JOIN (explicit)</strong></p>
+      
+      <p>This approach is identical to Approach 1 in functionality. The keyword OUTER is optional in most SQL implementations and simply makes the intention of the join more explicit.</p>
+
+      <p>LEFT JOIN and LEFT OUTER JOIN are functionally equivalent. The OUTER keyword is sometimes added for clarity to emphasize that it's an outer join operation.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 3: Using Subqueries</strong></p>
+      
+      <p>This approach uses correlated subqueries to look up the building and floor for each employee directly within the SELECT statement.</p>
+
+      <p>While this approach works, it's generally less efficient than using joins because the subqueries need to be executed for each row in the Employee table.</p>
+
+      <p>However, this approach can be useful in certain situations, such as when you need more complex filtering logic or when you're working with databases that have poor join optimization.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using LEFT JOIN</h4>
+        <pre>
+select 
+    e.givenname
+  , e.surname
+  , d.building
+  , d.floor
+
+from 
+  employee e
+    
+    left join department d
+       on e.employeeid = d.employeeid
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 1:</strong></p>
+            <p>
+            In this solution, we use a LEFT JOIN to connect the Employee table with the Department table based on the employeeId. 
+            This ensures we get all employees from the Employee table, even if they don't have a corresponding record in the Department table.
+            For employees without a department record, the building and floor will automatically be NULL.
+            </p>
+            <p>
+            This is the most straightforward and commonly used approach for this type of problem, as it's both readable and efficient.
+            </p>
+        </div>
+
+        <h4>Solution 2: Using LEFT OUTER JOIN (explicit)</h4>
+        <pre>
+select 
+    e.givenname
+  , e.surname
+  , d.building
+  , d.floor
+
+from 
+    employee e
+
+      left outer join department d 
+         on e.employeeid = d.employeeid
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 2:</strong></p>
+            <p>
+            This solution is identical to Solution 1 in functionality. The keyword OUTER is optional and simply makes the intention of the join more explicit.
+            Some developers prefer to include it for clarity, especially when working with codebases where different types of joins are used.
+            </p>
+            <p>
+            Most SQL database systems treat LEFT JOIN and LEFT OUTER JOIN as completely synonymous.
+            </p>
+        </div>
+
+        <h4>Solution 3: Using subqueries</h4>
+        <pre>
+select 
+    e.givenname
+  , e.surname
+  , (select d.building from department d where d.employeeid = e.employeeid) as building
+  , (select d.floor from department d where d.employeeid = e.employeeid) as floor
+
+from 
+  employee e
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 3:</strong></p>
+            <p>
+            This solution uses correlated subqueries to look up the building and floor for each employee. For each row in the Employee table,
+            the subqueries search for a matching record in the Department table.
+            </p>
+            <p>
+            If no matching record is found, the subqueries return NULL, which is exactly what we want. However, this approach is generally
+            less efficient than using joins, especially for larger datasets, because the subqueries need to be executed for each row in the Employee table.
+            </p>
+            <p>However, I would not recommened writing code this way. It's generally not a best practice to have select statements embedded inside of your select statment.</p>
+        </div>
+    </div>

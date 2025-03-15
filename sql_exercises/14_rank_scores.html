@@ -1,0 +1,204 @@
+
+    <h2>SQL Practice Question</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Performances</code></p>
+        <pre>
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| performer_id| int     |
+| rating      | decimal |
++-------------+---------+
+        </pre>
+        
+        <p><code>performer_id</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table contains the rating of a performance. Rating is a floating point value with two decimal places.</p>
+        
+        <p>Write a solution to find the rank of the ratings. The ranking should be calculated according to the following rules:</p>
+        <ul>
+            <li>The ratings should be ranked from the highest to the lowest.</li>
+            <li>If there is a tie between two ratings, both should have the same ranking.</li>
+            <li>After a tie, the next ranking number should be the next consecutive integer value. In other words, there should be no holes between ranks.</li>
+        </ul>
+        
+        <p>Return the result table ordered by <code>rating</code> in descending order.</p>
+        <p>The result format is in the following example.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Performances table:</p>
+        <table>
+            <tr>
+                <th>performer_id</th>
+                <th>rating</th>
+            </tr>
+            <tr>
+                <td>101</td>
+                <td>8.70</td>
+            </tr>
+            <tr>
+                <td>102</td>
+                <td>9.25</td>
+            </tr>
+            <tr>
+                <td>103</td>
+                <td>9.80</td>
+            </tr>
+            <tr>
+                <td>104</td>
+                <td>9.50</td>
+            </tr>
+            <tr>
+                <td>105</td>
+                <td>9.80</td>
+            </tr>
+            <tr>
+                <td>106</td>
+                <td>9.25</td>
+            </tr>
+        </table>
+        
+        <p><strong>Output:</strong></p>
+        <table>
+            <tr>
+                <th>rating</th>
+                <th>rank</th>
+            </tr>
+            <tr>
+                <td>9.80</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>9.80</td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>9.50</td>
+                <td>2</td>
+            </tr>
+            <tr>
+                <td>9.25</td>
+                <td>3</td>
+            </tr>
+            <tr>
+                <td>9.25</td>
+                <td>3</td>
+            </tr>
+            <tr>
+                <td>8.70</td>
+                <td>4</td>
+            </tr>
+        </table>
+    </div>
+    
+
+
+     <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create Performances table
+CREATE TABLE Performances (
+    performer_id INT PRIMARY KEY,
+    rating DECIMAL(4,2)
+);
+
+-- Insert sample data
+INSERT INTO Performances (performer_id, rating)
+VALUES
+    (101, 8.70),
+    (102, 9.25),
+    (103, 9.80),
+    (104, 9.50),
+    (105, 9.80),
+    (106, 9.25);
+</pre>
+    </div>
+
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using the DENSE_RANK Window Function</h4>
+        <pre>
+select
+    p.rating
+  , dense_rank() over (order by p.rating desc) as rank
+
+from
+    performances p
+
+order by
+    p.rating desc
+;
+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation 1:</strong></p>
+            <p>This solution uses the built-in window function DENSE_RANK() to assign ranks to each rating. The DENSE_RANK() function assigns ranks to rows in a partition, leaving no gaps in the ranking values when there are ties. This is exactly what we need based on the problem requirements.</p>
+            <p>The ORDER BY rating DESC part inside the OVER clause ensures that higher ratings get lower rank numbers (which is what we want - rank 1 should be the highest).</p>
+        </div>
+        
+        <h4>Solution 2: Using a Subquery with COUNT DISTINCT</h4>
+        <pre>
+select
+    p1.rating
+  , (
+      select
+        count(distinct p2.rating) 
+      
+      from
+        performances p2 
+      
+      where
+        p2.rating >= p1.rating
+    ) as rank
+
+from
+    performances p1
+
+order by
+    p1.rating desc
+;
+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation 2:</strong></p>
+            <p>This solution takes a different approach by using a subquery for each row. For each rating in the outer query (p1), the subquery counts how many distinct ratings are greater than or equal to the current rating.</p>
+            <p>This effectively assigns rank 1 to the highest rating(s), rank 2 to the next highest rating(s), and so on. The DISTINCT keyword ensures that we only count each unique rating value once, which gives us the desired dense ranking behavior.</p>
+            <p>This is also not a preferred way to write your code. Ideally, you would not put a "Select" statement inside of another select statement like this. 
+        </div>
+        
+        <h4>Solution 3: Using a Common Table Expression (CTE)</h4>
+        <pre>
+with ranked_performances as (
+  select
+      p.rating
+    , dense_rank() over (order by p.rating desc) as rank
+  
+  from
+    performances p
+)
+
+select
+    p.rating
+  , p.rank
+
+from
+    ranked_performances p
+
+order by
+    p.rating desc
+;
+  </pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation 3:</strong></p>
+            <p>This solution uses a Common Table Expression (CTE) to create a temporary result set that contains the ratings and their corresponding ranks. Inside the CTE, we use the DENSE_RANK() window function, just like in Solution 1.</p>
+            <p>The advantage of using a CTE is that it makes the query more readable, especially for complex queries where the ranked data might need additional processing. In this simple case, it works exactly the same as Solution 1, and given that this isn't a complex query, there's not much of a point of using a CTE.</p>
+        </div>
+    </div>
+

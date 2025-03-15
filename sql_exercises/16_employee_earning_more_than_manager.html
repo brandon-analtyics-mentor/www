@@ -1,0 +1,154 @@
+<h2>SQL Challenge: Find Developers Earning More Than Their Team Leads</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Developer</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| dev_id        | int  |
+| dev_name      | varchar |
+| compensation  | int  |
+| lead_id       | int  |
++---------------+------+
+        </pre>
+        
+        <p><code>dev_id</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table indicates the ID of a developer, their name, compensation, and the ID of their team lead.</p>
+        
+        <p>Write a solution to find the developers who earn more than their team leads.</p>
+        <p>Return the result table in <strong>any order</strong>.</p>
+        <p>The result format is in the following example.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Developer table:</p>
+        <pre>
++--------+----------+--------------+----------+
+| dev_id | dev_name | compensation | lead_id  |
++--------+----------+--------------+----------+
+| 101    | Lisa     | 95000        | 103      |
+| 102    | Marcus   | 87000        | 104      |
+| 103    | Rachel   | 82000        | Null     |
+| 104    | Thomas   | 92000        | Null     |
+| 105    | Jamal    | 90000        | 103      |
+| 106    | Priya    | 96000        | 104      |
++--------+----------+--------------+----------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++----------+
+| Developer |
++----------+
+| Lisa     |
+| Priya    |
++----------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong> Lisa earns $95,000 which is more than her team lead Rachel who earns $82,000. Priya earns $96,000 which is more than her team lead Thomas who earns $92,000.</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the Developer table
+CREATE TABLE Developer (
+    dev_id INT PRIMARY KEY,
+    dev_name VARCHAR(100),
+    compensation INT,
+    lead_id INT,
+    FOREIGN KEY (lead_id) REFERENCES Developer(dev_id)
+);
+
+-- Insert sample data
+INSERT INTO Developer (dev_id, dev_name, compensation, lead_id)
+VALUES 
+    (101, 'Lisa', 95000, 103),
+    (102, 'Marcus', 87000, 104),
+    (103, 'Rachel', 82000, NULL),
+    (104, 'Thomas', 92000, NULL),
+    (105, 'Jamal', 90000, 103),
+    (106, 'Priya', 96000, 104);</pre>
+    </div>
+    
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using JOIN</h4>
+        <pre>
+select 
+  d1.dev_name as "Developer"
+
+from
+  developer d1
+
+    join developer d2
+       on d1.lead_id = d2.dev_id
+
+where
+  d1.compensation > d2.compensation
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 1:</strong></p>
+            <p>
+            This solution uses a self-join to connect developers with their team leads. By joining the Developer table with itself, we create pairs of developers and their respective leads. Then we simply filter for cases where the developer's compensation is greater than their lead's compensation.
+            </p>
+        </div>
+
+        <h4>Solution 2: Using self-join with explicit join syntax</h4>
+        <pre>
+select
+  e.dev_name as "Developer"
+
+from
+  developer e -- employee
+
+    inner join developer l --lead
+      on e.lead_id = l.dev_id
+
+where
+  e.compensation > l.compensation
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 2:</strong></p>
+            <p>
+            This solution also uses a self-join but with more explicit table aliases (employee and lead) to make the query more readable. The logic is the same as Solution 1, but the naming makes it clearer what relationship we're examining.
+            </p>
+        </div>
+
+        <h4>Solution 3: Using a subquery</h4>
+        <pre>
+select
+  d.dev_name as "Developer"
+
+from
+  developer d
+
+where
+  d.compensation > (
+                      select
+                        d.compensation 
+                      from
+                        developer d 
+                      where
+                        s.dev_id = d.lead_id
+                    )
+;
+</pre>
+
+        <div class="explanation">
+            <p><strong>Explanation 3:</strong></p>
+            <p>
+            This approach uses a subquery instead of a join. For each developer, we find their lead's compensation using a subquery, and then compare it to the developer's own compensation. This solution can sometimes be more intuitive for people who find it easier to think about one table at a time.
+            </p>
+        </div>
+    </div>
