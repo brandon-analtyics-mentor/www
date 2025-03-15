@@ -1,67 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Salary Category Analysis</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            padding: 20px;
-            color: #333;
-        }
-        h2 {
-            color: #2c3e50;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        h3 {
-            color: #3498db;
-            margin-top: 25px;
-        }
-        pre {
-            background-color: #f8f8f8;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 15px;
-            overflow: auto;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        code {
-            font-family: 'Courier New', Courier, monospace;
-            background-color: #f8f8f8;
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 20px 0;
-        }
-        th, td {
-            text-align: left;
-            padding: 8px;
-            border: 1px solid #ddd;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .explanation {
-            background-color: #e7f4ff;
-            padding: 15px;
-            border-left: 4px solid #3498db;
-            margin: 20px 0;
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-    </style>
-</head>
-<body>
-
-<!-- delete above for embedded code --> 
-
 
     <h2>Employee Salary Category Analysis</h2>
     
@@ -164,40 +100,40 @@ INSERT INTO Employees (employee_id, annual_salary) VALUES
 
     <div class="explanation">
       <p><strong>Approach 1:</strong></p>
-      <p>
-      First, if we wish to count how many employees belong to a category, we're going to have to start by evaluating each one of the employees. This means that we're evaluating each employee record to determine which of the three categories that they fall into.
+      
+      <p>First, if we wish to count how many employees belong to a category, we're going to have to start by evaluating each one of the employees. This means that we're evaluating each employee record to determine which of the three categories that they fall into.</p>
 
-      Second, after we have assigned a category to each employee, we have to count up all of those employees based the category. This will give us our aggregated values by category.
+      <p>Second, after we have assigned a category to each employee, we have to count up all of those employees based the category. This will give us our aggregated values by category.</p>
 
-      Third, we need to double check our aggregated values by category. We need to ensure that all 3 categories are in our output list, and that the values for each category has a value of zero or greater.
+      <p>Third, we need to double check our aggregated values by category. We need to ensure that all 3 categories are in our output list, and that the values for each category has a value of zero or greater.</p>
 
-      Fourth, if we find that our output is missing any categories, we need to create the category with a value of 0 employees belonging to the category.
-      </p>
+      <p>Fourth, if we find that our output is missing any categories, we need to create the category with a value of 0 employees belonging to the category.</p>
+
     </div>
 
     <div class="explanation">
       <p><strong>Approach 2:</strong></p>
-      <p>
-      We can think about a similar approach to Approach 1, but we can simplify our work. Instead of aggregating all of our employees by category, then performing a double check to see if all categories exist, we can do these tasks at the same time.</br>
+      
+      <p>We can think about a similar approach to Approach 1, but we can simplify our work. Instead of aggregating all of our employees by category, then performing a double check to see if all categories exist, we can do these tasks at the same time.</p>
 
-      Knowing that we want to count our employees by Category, we can simply iterate over each employee record, evaluating if they are "entry level". We will get the counts and return the results for "entry level".</br>
+      <p>Knowing that we want to count our employees by Category, we can simply iterate over each employee record, evaluating if they are "entry level". We will get the counts and return the results for "entry level".</p>
 
-      Then we can repeat this process for the other two categories.</br>
+      <p>Then we can repeat this process for the other two categories.</p>
 
-      Then we can union all of those individual results together to get a single output.
+      <p>Then we can union all of those individual results together to get a single output.</p>
 
       </p>
     </div>
 
     <div class="explanation">
       <p><strong>Approach 3:</strong></p>
-      <p>
-      First, if we wish to count how many employees belong to a category, we're going to have to start by evaluating each one of the employees. This means that we're evaluating each employee record to determine which of the three categories that they fall into.</br>
+      
+      <p>First, if we wish to count how many employees belong to a category, we're going to have to start by evaluating each one of the employees. This means that we're evaluating each employee record to determine which of the three categories that they fall into.</p>
 
-      Second, after we have assigned a category to each employee, we have to count up all of those employees based the category. This will give us our aggregated values by category.</br>
+      <p>Second, after we have assigned a category to each employee, we have to count up all of those employees based the category. This will give us our aggregated values by category.</p>
 
-      Third, knowing that it is possible that a category doesn't exist, we can't simply count all of the employees. We should start our work by listing all of the categories that we want. Then we can find the number of employees that belong to the category. This is the equivelent of a left join operation. We'll list our categories in our left table, then create a right table that has our counts by categories that are in the employees data. When we left join, we'll ensure that we have all categories.
-      </p>
+      <p>Third, knowing that it is possible that a category doesn't exist, we can't simply count all of the employees. We should start our work by listing all of the categories that we want. Then we can find the number of employees that belong to the category. This is the equivelent of a left join operation. We'll list our categories in our left table, then create a right table that has our counts by categories that are in the employees data. When we left join, we'll ensure that we have all categories.</p>
+ 
     </div>
 
     <div class="section solutions-section">
@@ -424,9 +360,3 @@ from
 
 
 </div> <!-- solutions section -->
-
-
-
-<!-- delete below for embedded code --> 
-</body>
-</html>
