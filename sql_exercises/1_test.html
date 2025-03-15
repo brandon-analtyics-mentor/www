@@ -87,7 +87,7 @@ INSERT INTO Employees (employee_id, annual_salary) VALUES
 (8, 29999);</pre>
     </div>
     
-    <h3>Restating the Problem</h3>
+    <h3>Restating and Approaching the Problem</h3>
     <p>
         To solve this problem, we re-state what we are asked to do, at a very granular level.</p>
         <ul>
@@ -141,10 +141,8 @@ INSERT INTO Employees (employee_id, annual_salary) VALUES
         
         <h4>Solution 1: Count the employees by category, then backfill any missing categories</h4>
         <pre>
-
 /*
-  Count up all of our employees based on the Category group that they
-    belong to
+  Count up all of our employees based on the Category group that they belong to
 */
 select 
     ce.category
@@ -152,8 +150,7 @@ select
 from 
   (
     /*
-      Get all of the employee records and create a new Category field to
-        label their income level
+      Get all of the employee records and create a new Category field to label their income level
     */
     select 
         e.employee_id
@@ -168,15 +165,11 @@ group by
   ce.category
 
 /*
-  After labeling all of our employees and counting them up based on
-    which of the 3 Categy groups they fall into, it is possible that 
-    we might not have any employees in one of the 3 desired groups. 
+  After labeling all of our employees and counting them up based on which of the 3 Categy groups they fall into, it is possible that we might not have any employees in one of the 3 desired groups. 
 
   For example, maybe no employess are "entry level" at the company.
 
-  We need to inspect our results for any missing Category group. Then
-    if one is missing, we need to create that missing Category group and assign
-    a value of 0 employess as being part of that Category.
+  We need to inspect our results for any missing Category group. Then if one is missing, we need to create that missing Category group and assign a value of 0 employess as being part of that Category.
 */
 
 union all
@@ -184,10 +177,7 @@ union all
 /*
   Inspect for Entry Level category
 
-  Iterate over each employee record to find out if they meet the salary requirements
-    to be classified as entry level. If no records are found, then our evaluation of
-    "where not exists" is true, meaning we can create a result set that contains the
-    "entry level" category, with a value of 0 employees
+  Iterate over each employee record to find out if they meet the salary requirements to be classified as entry level. If no records are found, then our evaluation of "where not exists" is true, meaning we can create a result set that contains the "entry level" category, with a value of 0 employees
 */
 select 
     'entry level' as category
@@ -208,10 +198,7 @@ union all
 /*
   Inspect for Mid Level category
 
-  Iterate over each employee record to find out if they meet the salary requirements
-    to be classified as mid level. If no records are found, then our evaluation of
-    "where not exists" is true, meaning we can create a result set that contains the
-    "mid level" category, with a value of 0 employees
+  Iterate over each employee record to find out if they meet the salary requirements to be classified as mid level. If no records are found, then our evaluation of "where not exists" is true, meaning we can create a result set that contains the "mid level" category, with a value of 0 employees
 */
 select 
     'mid level' as category
@@ -293,7 +280,7 @@ from employees
 <div class="explanation">
     <p><strong>Explanation 2:</strong></p>
     <p>
-    While this code works, and it is fewer lines and easier to read and follow compared to Solution 1, it is only slightly more performant and still has performance issues. In Solution 1, we had to query the employees table 4 times. Here we are only querying the table 3 times, but that still isn't a good practice.</b>
+    While this code works and it is fewer lines and easier to read and follow compared to Solution 1, it is only slightly more performant and still has performance issues. In Solution 1, we had to query the employees table 4 times. Here we are only querying the table 3 times, but that still isn't a good practice.</b>
 
 </div>
 
@@ -352,7 +339,7 @@ from
 </pre>
 
 <div class="explanation">
-    <p><strong>Explanation 2:</strong></p>
+    <p><strong>Explanation 3:</strong></p>
     <p>
     With this code, we are only querying the employees table once to categories our results. This makes the code more performant than the previous two examples. </b>
 
