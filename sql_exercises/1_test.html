@@ -251,9 +251,9 @@ where not exists (
 */
 select
     'entry level' as category
-  , count(case when annual_salary < 30000 then 1 end) as employee_ct
+  , count(case when e.annual_salary < 30000 then 1 end) as employee_ct
 from
-  employees
+  employees e
 
 union all
 
@@ -261,9 +261,10 @@ union all
   Iterate over each employee record, evaluating if they are "mid level", counting the total found. 
 */
 select
-'mid level' as category,
-count(case when annual_salary between 30000 and 70000 then 1 end) as employee_ct
-from employees
+    'mid level' as category
+  , count(case when e.annual_salary between 30000 and 70000 then 1 end) as employee_ct
+from
+  employees e
 
 union all
 
@@ -271,9 +272,10 @@ union all
   Iterate over each employee record, evaluating if they are "senior level", counting the total found. 
 */
 select
-'senior level' as category,
-count(case when annual_salary > 70000 then 1 end) as employee_ct
-from employees
+    'senior level' as category
+  , count(case when e.annual_salary > 70000 then 1 end) as employee_ct
+from
+  employees
 ;
 </pre>
 
@@ -347,3 +349,4 @@ from
 
 
 </div> <!-- solutions section -->
+
