@@ -4,34 +4,34 @@
         <h3>Problem Description</h3>
         <p>Table: <code>Employee</code></p>
         <pre>
-+-------------+---------+
-| Column Name | Type    |
-+-------------+---------+
-| employeeId  | int     |
-| surname     | varchar |
-| givenName   | varchar |
++-------------+----------+
+| Column Name | Type     |
++-------------+----------+
+| employee_id  | int     |
+| surname     | varchar  |
+| given_name   | varchar |
 +-------------+---------+
         </pre>
         
-        <p><code>employeeId</code> is the primary key (column with unique values) for this table.<br>
+        <p><code>employee_id</code> is the primary key (column with unique values) for this table.<br>
         This table contains information about employees including their ID and name details.</p>
         
         <p>Table: <code>Department</code></p>
         <pre>
-+-------------+---------+
-| Column Name | Type    |
-+-------------+---------+
-| deptId      | int     |
-| employeeId  | int     |
-| building    | varchar |
-| floor       | varchar |
-+-------------+---------+
++-------------+----------+
+| Column Name | Type     |
++-------------+----------+
+| dept_id      | int     |
+| employee_id  | int     |
+| building     | varchar |
+| floor        | varchar |
++-------------+----------+
         </pre>
         
-        <p><code>deptId</code> is the primary key (column with unique values) for this table.<br>
-        Each row of this table contains information about the building and floor where an employee with ID = employeeId works.</p>
+        <p><code>dept_id</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table contains information about the building and floor where an employee with ID = employee_id works.</p>
         
-        <p>Write a solution to report the given name, surname, building, and floor of each employee in the <code>Employee</code> table. If the department information of an <code>employeeId</code> is not present in the <code>Department</code> table, report <code>null</code> instead.</p>
+        <p>Write a solution to report the given name, surname, building, and floor of each employee in the <code>Employee</code> table. If the department information of an <code>employee_id</code> is not present in the <code>Department</code> table, report <code>null</code> instead.</p>
         <p>Return the result table in <strong>any order</strong>.</p>
         <p>The result format is in the following example.</p>
     </div>
@@ -40,72 +40,40 @@
         <h3>Example</h3>
         
         <p><strong>Input:</strong><br>Employee table:</p>
-        <table>
-            <tr>
-                <th>employeeId</th>
-                <th>surname</th>
-                <th>givenName</th>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>Garcia</td>
-                <td>Maria</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>Chen</td>
-                <td>Wei</td>
-            </tr>
-        </table>
+                <pre>
++-------------+-----------------------+
+| employee_id | surname | given_name  | 
++-------------+-----------------------+
+| 1           | Garcia   | Maria      |
+| 2           | Chen     | Wei        |
++-------------+-----------------------+
+        </pre>
         
         <p>Department table:</p>
-        <table>
-            <tr>
-                <th>deptId</th>
-                <th>employeeId</th>
-                <th>building</th>
-                <th>floor</th>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>East Campus</td>
-                <td>3</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>3</td>
-                <td>Tech Center</td>
-                <td>2</td>
-            </tr>
-        </table>
+        <pre>
++-------------+-------------------------------+
+| dept_id | employee_id | building    | floor |
++-------------+-------------------------------+
+| 1       | 2           | East Campus | 3     |
+| 2       | 3           | Tech Center | 2     |
++---------------------+-----------------------+
+        </pre>
+
         
         <p><strong>Output:</strong></p>
-        <table>
-            <tr>
-                <th>givenName</th>
-                <th>surname</th>
-                <th>building</th>
-                <th>floor</th>
-            </tr>
-            <tr>
-                <td>Maria</td>
-                <td>Garcia</td>
-                <td>Null</td>
-                <td>Null</td>
-            </tr>
-            <tr>
-                <td>Wei</td>
-                <td>Chen</td>
-                <td>East Campus</td>
-                <td>3</td>
-            </tr>
-        </table>
+                <pre>
++-------------+-------------------------------+
+| given_name | surname | building    | floor  |
++-------------+-------------------------------+
+| Maria      | Garcia  | null        | null   |
+| Wei        | Chen    | East Campus | 3      |
++---------------------+-----------------------+
+        </pre>
         
         <div class="explanation">
             <p><strong>Explanation:</strong></p>
-            <p>There is no department information in the department table for employeeId = 1 so we return null for their building and floor.<br>
-            deptId = 1 contains information about the department of employeeId = 2.</p>
+            <p>There is no department information in the department table for employee_id = 1 so we return null for their building and floor.<br>
+            dept_id = 1 contains information about the department of employee_id = 2.</p>
         </div>
     </div>
     
@@ -114,28 +82,29 @@
         <pre>
 -- Create the Employee table
 CREATE TABLE Employee (
-    employeeId INT PRIMARY KEY,
+    employee_id INT PRIMARY KEY,
     surname VARCHAR(255),
-    givenName VARCHAR(255)
+    given_name VARCHAR(255)
 );
 
 -- Insert example data into Employee
-INSERT INTO Employee (employeeId, surname, givenName) VALUES
+INSERT INTO Employee (employee_id, surname, given_name) VALUES
 (1, 'Garcia', 'Maria'),
 (2, 'Chen', 'Wei');
 
 -- Create the Department table
 CREATE TABLE Department (
-    deptId INT PRIMARY KEY,
-    employeeId INT,
+    dept_id INT PRIMARY KEY,
+    employee_id INT,
     building VARCHAR(255),
     floor VARCHAR(50)
 );
 
 -- Insert example data into Department
-INSERT INTO Department (deptId, employeeId, building, floor) VALUES
+INSERT INTO Department (dept_id, employee_id, building, floor) VALUES
 (1, 2, 'East Campus', '3'),
-(2, 3, 'Tech Center', '2');</pre>
+(2, 3, 'Tech Center', '2');
+</pre>
     </div>
     
     <h3>Restating and Approaching the Problem</h3>
@@ -181,7 +150,7 @@ INSERT INTO Department (deptId, employeeId, building, floor) VALUES
         <h4>Solution 1: Using LEFT JOIN</h4>
         <pre>
 select 
-    e.givenname
+    e.given_name
   , e.surname
   , d.building
   , d.floor
@@ -190,14 +159,14 @@ from
   employee e
     
     left join department d
-       on e.employeeid = d.employeeid
+       on e.employee_id = d.employee_id
 ;
 </pre>
 
         <div class="explanation">
             <p><strong>Explanation 1:</strong></p>
             <p>
-            In this solution, we use a LEFT JOIN to connect the Employee table with the Department table based on the employeeId. 
+            In this solution, we use a LEFT JOIN to connect the Employee table with the Department table based on the employee_id. 
             This ensures we get all employees from the Employee table, even if they don't have a corresponding record in the Department table.
             For employees without a department record, the building and floor will automatically be NULL.
             </p>
@@ -209,7 +178,7 @@ from
         <h4>Solution 2: Using LEFT OUTER JOIN (explicit)</h4>
         <pre>
 select 
-    e.givenname
+    e.given_name
   , e.surname
   , d.building
   , d.floor
@@ -218,7 +187,7 @@ from
     employee e
 
       left outer join department d 
-         on e.employeeid = d.employeeid
+         on e.employee_id = d.employee_id
 ;
 </pre>
 
@@ -236,10 +205,10 @@ from
         <h4>Solution 3: Using subqueries</h4>
         <pre>
 select 
-    e.givenname
+    e.given_name
   , e.surname
-  , (select d.building from department d where d.employeeid = e.employeeid) as building
-  , (select d.floor from department d where d.employeeid = e.employeeid) as floor
+  , (select d.building from department d where d.employee_id = e.employee_id) as building
+  , (select d.floor from department d where d.employee_id = e.employee_id) as floor
 
 from 
   employee e
