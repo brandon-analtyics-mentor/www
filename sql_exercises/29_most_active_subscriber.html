@@ -1,0 +1,146 @@
+<h2>Most Active Subscriber</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>Subscriptions</code></p>
+    <pre>
++------------------+----------+
+| Column Name      | Type     |
++------------------+----------+
+| subscription_id  | int      |
+| subscriber_id    | int      |
++------------------+----------+
+    </pre>
+    
+    <p><code>subscription_id</code> is the primary key (column with unique values) for this table.<br>
+    This table contains information about the subscription ID and the subscriber ID.</p>
+    
+    <p>Write a solution to find the <code>subscriber_id</code> for the subscriber who has purchased <strong>the largest number of subscriptions</strong>.</p>
+    
+    <p>The test cases are generated so that <strong>exactly one subscriber</strong> will have purchased more subscriptions than any other subscriber.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>Subscriptions table:</p>
+    <pre>
++----------------+---------------+
+| subscription_id| subscriber_id |
++----------------+---------------+
+| 101            | 201           |
+| 102            | 202           |
+| 103            | 203           |
+| 104            | 203           |
+| 105            | 201           |
+| 106            | 203           |
++----------------+---------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++---------------+
+| subscriber_id |
++---------------+
+| 203           |
++---------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <p>The subscriber with ID 203 has three subscriptions, which is greater than either subscriber 201 who has two subscriptions or subscriber 202 who has only one subscription.</p>
+        <p>So the result is subscriber_id 203.</p>
+    </div>
+</div>
+
+<div class="section">
+    <h3>Schema Setup</h3>
+    <pre>
+-- Create the Subscriptions table
+CREATE TABLE Subscriptions (
+    subscription_id INT PRIMARY KEY,
+    subscriber_id INT
+);
+
+-- Insert sample data
+INSERT INTO Subscriptions (subscription_id, subscriber_id) VALUES
+(101, 201),
+(102, 202),
+(103, 203),
+(104, 203),
+(105, 201),
+(106, 203);
+    </pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Count the number of subscriptions for each subscriber</li>
+        <li>Find the subscriber with the most subscriptions</li>
+        <li>Return that subscriber's ID</li>
+    </ul>
+</p>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using GROUP BY with ORDER BY and LIMIT</h4>
+    <pre>
+SELECT subscriber_id
+FROM Subscriptions
+GROUP BY subscriber_id
+ORDER BY COUNT(subscription_id) DESC
+LIMIT 1;
+    </pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 1:</strong></p>
+        <p>This solution groups the subscribers and counts their subscriptions, then orders them in descending order by count. Since we know exactly one subscriber has more subscriptions than any other, we can simply take the first result with LIMIT 1.</p>
+    </div>
+
+    <h4>Solution 2: Using Common Table Expression (CTE)</h4>
+    <pre>
+WITH SubscriptionCounts AS (
+    SELECT 
+        subscriber_id, 
+        COUNT(subscription_id) AS subscription_count
+    FROM 
+        Subscriptions
+    GROUP BY 
+        subscriber_id
+)
+SELECT 
+    subscriber_id
+FROM 
+    SubscriptionCounts
+WHERE 
+    subscription_count = (SELECT MAX(subscription_count) FROM SubscriptionCounts);
+    </pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 2:</strong></p>
+        <p>This solution uses a CTE to first calculate the count of subscriptions for each subscriber. Then it selects the subscriber whose count equals the maximum count from all subscribers.</p>
+        <p>This approach is slightly more verbose but more flexible if we needed to add additional criteria or wanted to see the actual counts in the results.</p>
+    </div>
+
+    <h4>Solution 3: Using Window Function</h4>
+    <pre>
+SELECT DISTINCT subscriber_id
+FROM (
+    SELECT 
+        subscriber_id,
+        COUNT(subscription_id) OVER (PARTITION BY subscriber_id) as subscription_count,
+        RANK() OVER (ORDER BY COUNT(subscription_id) OVER (PARTITION BY subscriber_id) DESC) as rnk
+    FROM 
+        Subscriptions
+) ranked_subscribers
+WHERE rnk = 1;
+    </pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 3:</strong></p>
+        <p>This solution uses window functions to calculate subscription counts and rank subscribers by their count. Then it filters for only the top-ranked subscriber.</p>
+        <p>This approach demonstrates the power of window functions for analytical queries, though it might be considered overkill for this simple problem.</p>
+    </div>
+</div>

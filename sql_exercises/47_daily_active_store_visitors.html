@@ -1,0 +1,233 @@
+<h2>Daily Active Store Visitors</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>StoreTraffic</code></p>
+        <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| visitor_id    | int     |
+| visit_id      | int     |
+| visit_date    | date    |
+| action_type   | enum    |
++---------------+---------+
+        </pre>
+        
+        <p>This table may have duplicate rows.<br>
+        The action_type column is an ENUM (category) of type ('enter_store', 'exit_store', 'browse_product', 'make_purchase').<br>
+        The table shows visitor activities for a retail store chain.<br>
+        Note that each visit belongs to exactly one visitor.</p>
+        
+        <p>Write a solution to find the daily active visitor count for a period of <strong>45</strong> days ending <strong>2023-11-15</strong> inclusively. A visitor was active on a day if they performed at least one action on that day.</p>
+        
+        <p>Return the result table in <strong>any order</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>StoreTraffic table:</p>
+        <pre>
++------------+----------+------------+---------------+
+| visitor_id | visit_id | visit_date | action_type   |
++------------+----------+------------+---------------+
+| 101        | 501      | 2023-11-01 | enter_store   |
+| 101        | 501      | 2023-11-01 | browse_product|
+| 101        | 501      | 2023-11-01 | exit_store    |
+| 102        | 504      | 2023-11-01 | enter_store   |
+| 102        | 504      | 2023-11-02 | browse_product|
+| 102        | 504      | 2023-11-02 | exit_store    |
+| 103        | 502      | 2023-11-02 | enter_store   |
+| 103        | 502      | 2023-11-02 | make_purchase |
+| 103        | 502      | 2023-11-02 | exit_store    |
+| 104        | 503      | 2023-10-05 | enter_store   |
+| 104        | 503      | 2023-10-05 | exit_store    |
+| 105        | 505      | 2023-11-03 | enter_store   |
+| 105        | 505      | 2023-11-03 | browse_product|
+| 106        | 506      | 2023-11-03 | enter_store   |
+| 106        | 506      | 2023-11-03 | make_purchase |
++------------+----------+------------+---------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++------------+----------------+ 
+| day        | active_visitors|
++------------+----------------+ 
+| 2023-11-01 | 2              |
+| 2023-11-02 | 2              |
+| 2023-11-03 | 2              |
++------------+----------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <p>Note that we do not care about days with zero active visitors.</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the storetraffic table
+create table storetraffic (
+    visitor_id int,
+    visit_id int,
+    visit_date date,
+    action_type varchar
+);
+
+-- insert example data
+insert into storetraffic (visitor_id, visit_id, visit_date, action_type) values
+(101, 501, '2023-11-01', 'enter_store'),
+(101, 501, '2023-11-01', 'browse_product'),
+(101, 501, '2023-11-01', 'exit_store'),
+(102, 504, '2023-11-01', 'enter_store'),
+(102, 504, '2023-11-02', 'browse_product'),
+(102, 504, '2023-11-02', 'exit_store'),
+(103, 502, '2023-11-02', 'enter_store'),
+(103, 502, '2023-11-02', 'make_purchase'),
+(103, 502, '2023-11-02', 'exit_store'),
+(104, 503, '2023-10-05', 'enter_store'),
+(104, 503, '2023-10-05', 'exit_store'),
+(105, 505, '2023-11-03', 'enter_store'),
+(105, 505, '2023-11-03', 'browse_product'),
+(106, 506, '2023-11-03', 'enter_store'),
+(106, 506, '2023-11-03', 'make_purchase');
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Find all visitors who performed at least one action each day</li>
+            <li>Count unique visitors per day</li>
+            <li>Filter for the specified date range (45 days ending 2023-11-15)</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use COUNT(DISTINCT) to count unique visitors for each day within the specified date range.</p>
+      
+      <p>This approach directly counts distinct visitor IDs grouped by visit date after filtering for the required date range.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use a subquery with GROUP BY to first identify unique visitor-day combinations, then count them in the outer query.</p>
+      
+      <p>This approach ensures each visitor is counted only once per day, even if they performed multiple actions.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 3:</strong></p>
+      
+      <p>We can use Common Table Expressions (CTEs) to generate the full date range and calculate active visitors, then join them to show only days with active visitors.</p>
+      
+      <p>This approach allows us to handle the complete date range systematically and offers more flexibility for future modifications.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using COUNT(DISTINCT)</h4>
+        <pre>
+SELECT 
+    visit_date AS day,
+    COUNT(DISTINCT visitor_id) AS active_visitors
+FROM 
+    StoreTraffic
+WHERE 
+    visit_date BETWEEN (DATE '2023-11-15' - INTERVAL '44 days') AND '2023-11-15'
+GROUP BY 
+    visit_date
+ORDER BY 
+    visit_date;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses COUNT(DISTINCT) to count unique visitors for each day within the specified date range. By using DISTINCT with the visitor_id, we ensure that each visitor is counted only once per day, regardless of how many actions they performed on that day.</p>
+
+    <p>The WHERE clause filters for the 45-day period ending on 2023-11-15. We use a date calculation to determine the start date (44 days before the end date, which gives us a total of 45 days including the end date).</p>
+</div>
+
+        <h4>Solution 2: Using a Subquery with GROUP BY</h4>
+        <pre>
+SELECT 
+    activity_day AS day,
+    COUNT(*) AS active_visitors
+FROM (
+    SELECT 
+        visitor_id,
+        visit_date AS activity_day
+    FROM 
+        StoreTraffic
+    WHERE 
+        visit_date >= '2023-10-02' AND visit_date <= '2023-11-15'
+    GROUP BY 
+        visitor_id, visit_date
+) AS daily_active
+GROUP BY 
+    activity_day
+ORDER BY 
+    activity_day;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a subquery to first get distinct visitor-day combinations, then counts them in the outer query. The inner query groups by both visitor_id and visit_date to ensure each visitor is represented only once per day.</p>
+
+    <p>The WHERE clause in the subquery filters for the date range. Note that '2023-10-02' is 44 days before '2023-11-15', giving us the required 45-day period. The outer query then counts the number of distinct visitor-day entries for each day.</p>
+</div>
+
+        <h4>Solution 3: Using Common Table Expression (CTE)</h4>
+        <pre>
+WITH DateRange AS (
+    SELECT GENERATE_SERIES(
+        '2023-11-15'::DATE - INTERVAL '44 days',
+        '2023-11-15'::DATE,
+        '1 day'::INTERVAL
+    ) AS date
+),
+ActiveVisitors AS (
+    SELECT 
+        visit_date,
+        COUNT(DISTINCT visitor_id) AS active_count
+    FROM 
+        StoreTraffic
+    WHERE 
+        visit_date BETWEEN '2023-10-02' AND '2023-11-15'
+    GROUP BY 
+        visit_date
+)
+SELECT 
+    dr.date AS day,
+    COALESCE(av.active_count, 0) AS active_visitors
+FROM 
+    DateRange dr
+LEFT JOIN 
+    ActiveVisitors av ON dr.date = av.visit_date
+WHERE 
+    COALESCE(av.active_count, 0) > 0
+ORDER BY 
+    dr.date;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses Common Table Expressions (CTEs) to solve the problem in a more structured way. First, it creates a DateRange CTE that generates all dates in the specified 45-day period using the GENERATE_SERIES function.</p>
+
+    <p>Then, it creates an ActiveVisitors CTE that counts distinct visitors for each day in the date range. Finally, it joins these two CTEs and filters out days with zero active visitors.</p>
+
+    <p>The COALESCE function is used to handle days where there might be no active visitors, replacing NULL values with 0. We then filter out days with zero visitors as specified in the problem description.</p>
+</div>
+
+    </div> <!-- solutions section -->

@@ -1,0 +1,231 @@
+<h2>Popular Restaurant Traffic Analysis</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>
+            You are given data about a restaurant's daily customer traffic. Each record includes a log ID, service date, 
+            and the number of customers served that day. You need to identify periods of sustained high traffic.
+        </p>
+        <p>
+            Write a SQL query to display records with three or more <strong>consecutive</strong> log_id's where 
+            each record has at least 70 customers. Return the results ordered by service_date in ascending order.
+        </p>
+        
+        <p>Table: <code>Restaurant</code></p>
+        <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| log_id        | int     |
+| service_date  | date    |
+| customers     | int     |
++---------------+---------+
+        </pre>
+        
+        <p><code>log_id</code> is the column with unique values for this table.<br>
+        Each row contains the service date and log ID for the restaurant with the number of customers during that day.<br>
+        As the log_id increases, the date increases as well.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Restaurant table:</p>
+        <pre>
++--------+-------------+-----------+
+| log_id | service_date| customers |
++--------+-------------+-----------+
+| 1      | 2023-05-01  | 25        |
+| 2      | 2023-05-02  | 85        |
+| 3      | 2023-05-03  | 120       |
+| 4      | 2023-05-04  | 65        |
+| 5      | 2023-05-05  | 110       |
+| 6      | 2023-05-06  | 168       |
+| 7      | 2023-05-07  | 95        |
+| 8      | 2023-05-09  | 126       |
++--------+-------------+-----------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++--------+-------------+-----------+
+| log_id | service_date| customers |
++--------+-------------+-----------+
+| 5      | 2023-05-05  | 110       |
+| 6      | 2023-05-06  | 168       |
+| 7      | 2023-05-07  | 95        |
+| 8      | 2023-05-09  | 126       |
++--------+-------------+-----------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <p>
+                The four rows with log_ids 5, 6, 7, and 8 have consecutive log_ids and each of them has >= 70 customers.
+                Note that row 8 was included even though the service_date was not the next day after row 7.
+                The rows with log_ids 2 and 3 are not included because we need at least three consecutive log_ids.
+            </p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the restaurant table
+create table restaurant (
+    log_id int primary key,
+    service_date date,
+    customers int
+);
+
+-- insert example data
+insert into restaurant (log_id, service_date, customers) values
+(1, '2023-05-01', 25),
+(2, '2023-05-02', 85),
+(3, '2023-05-03', 120),
+(4, '2023-05-04', 65),
+(5, '2023-05-05', 110),
+(6, '2023-05-06', 168),
+(7, '2023-05-07', 95),
+(8, '2023-05-09', 126);
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Identify records where customers count is at least 70</li>
+            <li>Find groups of these records with three or more consecutive log_id values</li>
+            <li>Return these records ordered by service_date in ascending order</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use window functions to identify consecutive log_ids. First, we'll filter for records with at least 70 customers, then use techniques to find groups with 3 or more consecutive log_ids.</p>
+
+      <p>The key insight is that for consecutive log_ids, the difference between log_id and row number should be constant within each consecutive group.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use self-joins to find groups of records with consecutive log_ids. By joining the table to itself multiple times, we can identify records that have at least two consecutive records following them.</p>
+
+      <p>This approach requires careful joining conditions to ensure we're finding truly consecutive log_ids while also checking that each record has at least 70 customers.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using Window Functions</h4>
+        <pre>
+WITH filtered_traffic AS (
+    SELECT 
+        log_id,
+        service_date,
+        customers,
+        log_id - ROW_NUMBER() OVER (ORDER BY log_id) AS grp
+    FROM 
+        restaurant
+    WHERE 
+        customers >= 70
+),
+grouped_traffic AS (
+    SELECT 
+        grp,
+        COUNT(*) AS group_size
+    FROM 
+        filtered_traffic
+    GROUP BY 
+        grp
+    HAVING 
+        COUNT(*) >= 3
+)
+
+SELECT 
+    ft.log_id,
+    ft.service_date,
+    ft.customers
+FROM 
+    filtered_traffic ft
+    JOIN grouped_traffic gt ON ft.grp = gt.grp
+ORDER BY 
+    ft.service_date;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution works by first filtering the restaurant table to include only records with at least 70 customers. We then use a window function technique to identify groups of consecutive log_ids.</p>
+
+    <p>The key insight is using the expression <code>log_id - ROW_NUMBER() OVER (ORDER BY log_id)</code>, which creates a constant value for consecutive log_ids. We group by this value to find groups with at least 3 consecutive log_ids, then join back to get the complete record details.</p>
+</div>
+
+        <h4>Solution 2: Using Lag/Lead Window Functions</h4>
+        <pre>
+WITH high_traffic AS (
+    SELECT 
+        log_id,
+        service_date,
+        customers,
+        LAG(log_id, 1) OVER (ORDER BY log_id) AS prev_log_id,
+        LAG(log_id, 2) OVER (ORDER BY log_id) AS prev2_log_id,
+        LEAD(log_id, 1) OVER (ORDER BY log_id) AS next_log_id,
+        LEAD(log_id, 2) OVER (ORDER BY log_id) AS next2_log_id
+    FROM 
+        restaurant
+    WHERE 
+        customers >= 70
+)
+
+SELECT 
+    log_id,
+    service_date,
+    customers
+FROM 
+    high_traffic
+WHERE 
+    (log_id = prev_log_id + 1 AND prev_log_id = prev2_log_id + 1) 
+    OR (log_id = prev_log_id + 1 AND log_id = next_log_id - 1)
+    OR (log_id = next_log_id - 1 AND next_log_id = next2_log_id - 1)
+ORDER BY 
+    service_date;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses the LAG and LEAD window functions to check previous and next log_id values for each record with at least 70 customers.</p>
+
+    <p>By comparing a record's log_id with its neighbors, we can determine if it belongs to a group of at least 3 consecutive log_ids. The WHERE clause checks three cases: either the record and its two predecessors form a consecutive group, or the record forms a consecutive trio with one predecessor and one successor, or the record and its two successors form a consecutive group.</p>
+</div>
+
+        <h4>Solution 3: Using Self-Joins</h4>
+        <pre>
+SELECT DISTINCT
+    r1.log_id,
+    r1.service_date,
+    r1.customers
+FROM 
+    restaurant r1
+    JOIN restaurant r2 ON r2.log_id = r1.log_id + 1 AND r2.customers >= 70
+    JOIN restaurant r3 ON r3.log_id = r2.log_id + 1 AND r3.customers >= 70
+WHERE 
+    r1.customers >= 70
+ORDER BY 
+    r1.service_date;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses self-joins to find records that have at least two consecutive records following them, all with at least 70 customers.</p>
+
+    <p>We join the restaurant table to itself twice, with the joining condition ensuring that the log_ids are consecutive. This gives us groups of three consecutive log_ids where each record has at least 70 customers.</p>
+
+    <p>Note that this approach will only return the starting record of each group of three consecutive log_ids. To get all records in groups of three or more consecutive log_ids, additional processing would be needed.</p>
+</div>
+
+    </div> <!-- solutions section -->

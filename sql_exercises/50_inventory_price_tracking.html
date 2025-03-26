@@ -1,0 +1,230 @@
+<h2>SQL Challenge: Inventory Price Tracking</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Write a solution to find the prices of all inventory items on <strong>2023-05-12</strong>. Assume the price of all inventory items before any update is <strong>15</strong>.</p>
+        <p>Return the result table in <strong>any order</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Table Schema</h3>
+        <p>Table: <code>InventoryPrices</code></p>
+        <pre>
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| item_id        | int     |
+| updated_price  | int     |
+| update_date    | date    |
++----------------+---------+</pre>
+        <p>(item_id, update_date) is the primary key (combination of columns with unique values) of this table.</p>
+        <p>Each row of this table indicates that the price of some inventory item was updated to a new price on a specific date.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>InventoryPrices table:</p>
+        <pre>
++----------+---------------+-------------+
+| item_id  | updated_price | update_date |
++----------+---------------+-------------+
+| 101      | 25            | 2023-05-09  |
+| 102      | 45            | 2023-05-10  |
+| 101      | 28            | 2023-05-11  |
+| 101      | 32            | 2023-05-12  |
+| 102      | 55            | 2023-05-14  |
+| 103      | 18            | 2023-05-15  |
++----------+---------------+-------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++----------+-------+
+| item_id  | price |
++----------+-------+
+| 101      | 32    |
+| 102      | 45    |
+| 103      | 15    |
++----------+-------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>For item 101, the most recent price before or on 2023-05-12 is 32, which was updated on 2023-05-12.</li>
+                <li>For item 102, the most recent price before or on 2023-05-12 is 45, which was updated on 2023-05-10.</li>
+                <li>For item 103, there was no price update on or before 2023-05-12, so its price remains the default value of 15.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the InventoryPrices table
+create table InventoryPrices (
+    item_id int,
+    updated_price int,
+    update_date date,
+    primary key (item_id, update_date)
+);
+
+-- insert example data
+insert into InventoryPrices (item_id, updated_price, update_date) values
+(101, 25, '2023-05-09'),
+(102, 45, '2023-05-10'),
+(101, 28, '2023-05-11'),
+(101, 32, '2023-05-12'),
+(102, 55, '2023-05-14'),
+(103, 18, '2023-05-15');
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Find the price of each inventory item on the specific date 2023-05-12</li>
+            <li>For each item, use the most recent price update on or before 2023-05-12</li>
+            <li>For items with no updates before or on this date, use the default price of 15</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use a subquery to find the most recent price update for each item on or before 2023-05-12. Then combine this with a list of all distinct items to ensure we include those with no updates.</p>
+
+      <p>This approach requires us to first identify all items and their most recent price updates, then handle the default price case for items without updates before the target date.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use a Common Table Expression (CTE) with window functions to rank the updates for each item by date in descending order, then select only the top-ranked update for each item.</p>
+
+      <p>This approach allows us to efficiently find the most recent price for each item before or on the target date, and then handle the default price case separately.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using Subquery with LEFT JOIN</h4>
+        <pre>
+WITH all_items AS (
+    SELECT DISTINCT item_id
+    FROM InventoryPrices
+),
+latest_updates AS (
+    SELECT ip1.item_id, ip1.updated_price
+    FROM InventoryPrices ip1
+    WHERE ip1.update_date <= '2023-05-12'
+    AND NOT EXISTS (
+        SELECT 1
+        FROM InventoryPrices ip2
+        WHERE ip2.item_id = ip1.item_id
+        AND ip2.update_date <= '2023-05-12'
+        AND ip2.update_date > ip1.update_date
+    )
+)
+
+SELECT 
+    a.item_id,
+    COALESCE(lu.updated_price, 15) AS price
+FROM 
+    all_items a
+LEFT JOIN 
+    latest_updates lu ON a.item_id = lu.item_id
+
+UNION
+
+SELECT 
+    item_id,
+    15 AS price
+FROM 
+    (SELECT DISTINCT item_id FROM InventoryPrices) AS items
+WHERE 
+    item_id NOT IN (SELECT item_id FROM all_items)
+ORDER BY 
+    item_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution first identifies all distinct item_ids in the inventory. It then finds the latest price update for each item that occurred on or before 2023-05-12. Finally, it combines these results using a LEFT JOIN, using COALESCE to apply the default price of 15 for items without updates.</p>
+
+    <p>The UNION part handles any items that might be in the system but not in our current view. This ensures we don't miss any inventory items in our final result.</p>
+</div>
+
+        <h4>Solution 2: Using Window Functions</h4>
+        <pre>
+WITH ranked_prices AS (
+    SELECT 
+        item_id,
+        updated_price,
+        ROW_NUMBER() OVER(PARTITION BY item_id ORDER BY update_date DESC) AS rn
+    FROM 
+        InventoryPrices
+    WHERE 
+        update_date <= '2023-05-12'
+),
+all_items AS (
+    SELECT DISTINCT item_id
+    FROM InventoryPrices
+)
+
+SELECT
+    a.item_id,
+    COALESCE(rp.updated_price, 15) AS price
+FROM
+    all_items a
+LEFT JOIN
+    ranked_prices rp ON a.item_id = rp.item_id AND rp.rn = 1
+ORDER BY
+    a.item_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses the ROW_NUMBER() window function to rank each price update for an item by date in descending order. We filter to only include updates on or before 2023-05-12, then select the top-ranked update (most recent) for each item.</p>
+
+    <p>The LEFT JOIN with all distinct items ensures we include items with no updates before the target date, and COALESCE handles the default price of 15 for these cases.</p>
+</div>
+
+        <h4>Solution 3: Using LATERAL JOIN</h4>
+        <pre>
+WITH all_items AS (
+    SELECT DISTINCT item_id 
+    FROM InventoryPrices
+)
+
+SELECT 
+    a.item_id,
+    COALESCE(latest.updated_price, 15) AS price
+FROM 
+    all_items a
+LEFT JOIN LATERAL (
+    SELECT updated_price
+    FROM InventoryPrices ip
+    WHERE ip.item_id = a.item_id
+    AND ip.update_date <= '2023-05-12'
+    ORDER BY ip.update_date DESC
+    LIMIT 1
+) AS latest ON true
+ORDER BY 
+    a.item_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a LATERAL JOIN, which allows the subquery to reference columns from preceding FROM items. For each distinct item, it finds the most recent price update on or before 2023-05-12.</p>
+
+    <p>The LIMIT 1 with ORDER BY update_date DESC ensures we get only the most recent update. The LEFT JOIN preserves all items, and COALESCE handles the default price of 15 for items without updates before the target date.</p>
+
+    <p>This approach is very efficient for PostgreSQL databases and provides a clean, readable solution to the problem.</p>
+</div>
+
+    </div> <!-- solutions section -->

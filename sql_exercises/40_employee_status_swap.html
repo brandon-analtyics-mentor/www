@@ -1,0 +1,157 @@
+<h2>Employee Status Swap</h2>
+    
+    <div class="section">
+        <h3>Problem Statement</h3>
+        <p>Table: <code>Personnel</code></p>
+        <pre>
++-------------+----------+
+| Column Name | Type     |
++-------------+----------+
+| emp_id      | int      |
+| full_name   | varchar  |
+| status      | ENUM     |
+| compensation| int      |
++-------------+----------+
+        </pre>
+        
+        <p><code>emp_id</code> is the primary key (column with unique values) for this table.<br>
+        The <code>status</code> column is ENUM (category) value of type ('p', 'c').<br>
+        The table contains information about company personnel, where status 'p' represents permanent employees and 'c' represents contract employees.</p>
+        
+        <p>Write a solution to swap all <code>'p'</code> and <code>'c'</code> values (i.e., change all <code>'p'</code> values to <code>'c'</code> and vice versa) with a <strong>single update statement</strong> and no intermediate temporary tables.</p>
+        
+        <p>Note that you must write a single update statement, <strong>do not</strong> write any select statement for this problem.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Personnel table:</p>
+        <pre>
++--------+-----------+--------+-------------+
+| emp_id | full_name | status | compensation|
++--------+-----------+--------+-------------+
+| 101    | Alex      | p      | 4800        |
+| 102    | Barbara   | c      | 3200        |
+| 103    | Carlos    | p      | 5100        |
+| 104    | Diana     | c      | 2700        |
++--------+-----------+--------+-------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++--------+-----------+--------+-------------+
+| emp_id | full_name | status | compensation|
++--------+-----------+--------+-------------+
+| 101    | Alex      | c      | 4800        |
+| 102    | Barbara   | p      | 3200        |
+| 103    | Carlos    | c      | 5100        |
+| 104    | Diana     | p      | 2700        |
++--------+-----------+--------+-------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>(101, Alex) and (103, Carlos) were changed from 'p' (permanent) to 'c' (contract).</li>
+                <li>(102, Barbara) and (104, Diana) were changed from 'c' (contract) to 'p' (permanent).</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the Personnel table
+CREATE TABLE Personnel (
+    emp_id INT PRIMARY KEY,
+    full_name VARCHAR(100),
+    status VARCHAR(1) CHECK (status IN ('p', 'c')),
+    compensation INT
+);
+
+-- Insert sample data
+INSERT INTO Personnel (emp_id, full_name, status, compensation)
+VALUES
+    (101, 'Alex', 'p', 4800),
+    (102, 'Barbara', 'c', 3200),
+    (103, 'Carlos', 'p', 5100),
+    (104, 'Diana', 'c', 2700);
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Update all rows in the Personnel table</li>
+            <li>Change all 'p' values to 'c' and all 'c' values to 'p'</li>
+            <li>Use a single UPDATE statement without intermediate tables</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use a CASE statement to determine the new value based on the current value of the status field. This is a direct and readable approach that handles the swapping in a single statement.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use a simplified CASE statement with an ELSE clause since there are only two possible values. This makes the code slightly more concise.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using CASE statement</h4>
+        <pre>
+UPDATE Personnel
+SET status = CASE 
+    WHEN status = 'p' THEN 'c'
+    WHEN status = 'c' THEN 'p'
+    END;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a CASE statement to check the current value of the status column and change it accordingly. When the status is 'p', it's changed to 'c', and when the status is 'c', it's changed to 'p'.</p>
+
+    <p>This is the most explicit and readable way to handle the swap, as it clearly shows both transformations.</p>
+</div>
+
+        <h4>Solution 2: Using Mathematical Expression</h4>
+        <pre>
+UPDATE Personnel
+SET status = CASE 
+    WHEN status = 'p' THEN 'c'
+    ELSE 'p'
+    END;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a simplified CASE statement with an ELSE clause. Since we know there are only two possible values ('p' and 'c'), we can check for one condition and use ELSE for the other.</p>
+
+    <p>This approach is slightly more concise while maintaining readability. It works because we're guaranteed that the status value is either 'p' or 'c' due to the CHECK constraint on the table.</p>
+</div>
+
+        <h4>Solution 3: Using String Manipulation</h4>
+        <pre>
+UPDATE Personnel
+SET status = (
+    SELECT SUBSTRING('pc', CASE WHEN status = 'p' THEN 2 ELSE 1 END, 1)
+);
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses string manipulation to swap the values. It creates a string 'pc' and extracts either the first character ('p') or the second character ('c') based on the current value of status.</p>
+
+    <p>While this approach is more complex and less intuitive than the CASE statement solutions, it demonstrates a creative way to solve the problem using string functions. For PostgreSQL, the CASE statement approaches (Solutions 1 and 2) are typically preferred for their clarity and efficiency.</p>
+</div>
+
+    </div> <!-- solutions section -->

@@ -1,0 +1,193 @@
+<h2>Largest Unique Rating</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>ProductRatings</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| rating        | int  |
++---------------+------+
+    </pre>
+    
+    <p>This table may contain duplicate ratings (In other words, there is no primary key for this table in SQL).<br>
+    Each row of this table contains an integer representing a product rating.</p>
+    
+    <p>A <strong>unique rating</strong> is a rating that appears exactly once in the <code>ProductRatings</code> table.</p>
+    
+    <p>Write an SQL query to find the largest <strong>unique rating</strong>. If there is no <strong>unique rating</strong>, report <code>null</code>.</p>
+    
+    <p>The query result format is shown in the following examples:</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Example 1:</strong><br>
+    <strong>Input:</strong><br>ProductRatings table:</p>
+    <pre>
++--------+
+| rating |
++--------+
+| 9      |
+| 9      |
+| 5      |
+| 5      |
+| 2      |
+| 7      |
+| 8      |
+| 3      |
++--------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++--------+
+| rating |
++--------+
+| 8      |
++--------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong> The unique ratings are 2, 3, 7, and 8. Since 8 is the largest unique rating, we return it.</p>
+    </div>
+    
+    <p><strong>Example 2:</strong><br>
+    <strong>Input:</strong><br>ProductRatings table:</p>
+    <pre>
++--------+
+| rating |
++--------+
+| 9      |
+| 9      |
+| 6      |
+| 6      |
+| 4      |
+| 4      |
+| 4      |
++--------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++--------+
+| rating |
++--------+
+| null   |
++--------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong> There are no unique ratings in the input table so we return null.</p>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- create the productratings table
+create table productratings (
+    rating int
+);
+
+-- insert example 1 data
+insert into productratings (rating) values
+(9), (9), (5), (5), (2), (7), (8), (3);
+
+-- For example 2, you would clear the table and insert:
+-- insert into productratings (rating) values
+-- (9), (9), (6), (6), (4), (4), (4);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Find all ratings that appear exactly once in the ProductRatings table</li>
+        <li>From these unique ratings, find the largest one</li>
+        <li>If no unique ratings exist, return null</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use a GROUP BY clause to count occurrences of each rating, then filter for ratings that appear exactly once. Finally, we can use MAX to find the largest unique rating.</p>
+
+  <p>This approach requires us to first identify all unique ratings (those with a count of 1), and then find the maximum value among them.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use a Common Table Expression (CTE) to first identify all unique ratings, then find the maximum value from that set.</p>
+
+  <p>This approach separates the process into two steps: first identifying unique ratings, then finding the maximum among them.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using GROUP BY and HAVING</h4>
+    <pre>
+SELECT MAX(rating) as rating
+FROM (
+    SELECT rating
+    FROM productratings
+    GROUP BY rating
+    HAVING COUNT(*) = 1
+) as unique_ratings;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution first uses a subquery to find all ratings that appear exactly once in the table (using GROUP BY and HAVING COUNT(*) = 1). Then it applies the MAX function to find the largest unique rating.</p>
+
+    <p>If there are no unique ratings, MAX will return NULL, which satisfies our requirement for the case when no unique ratings exist.</p>
+</div>
+
+    <h4>Solution 2: Using CTE (Common Table Expression)</h4>
+    <pre>
+WITH unique_ratings AS (
+    SELECT rating
+    FROM productratings
+    GROUP BY rating
+    HAVING COUNT(*) = 1
+)
+
+SELECT MAX(rating) as rating
+FROM unique_ratings;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a CTE named unique_ratings to first identify all ratings that appear exactly once. Then, it finds the maximum value among these unique ratings.</p>
+
+    <p>The result is the same as Solution 1, but the CTE approach makes the query more readable and maintainable.</p>
+</div>
+
+    <h4>Solution 3: Using NOT IN with Subquery</h4>
+    <pre>
+SELECT MAX(r1.rating) as rating
+FROM productratings r1
+WHERE r1.rating NOT IN (
+    SELECT r2.rating
+    FROM productratings r2
+    WHERE r2.rating = r1.rating
+    GROUP BY r2.rating
+    HAVING COUNT(*) > 1
+);
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a different approach. It first identifies all ratings that appear more than once using a subquery with GROUP BY and HAVING COUNT(*) > 1. Then, it finds the maximum rating among those that do NOT appear in the list of non-unique ratings.</p>
+
+    <p>This approach effectively finds ratings that are not duplicated, which are our unique ratings, and then returns the maximum among them.</p>
+</div>
+
+</div> <!-- solutions section -->

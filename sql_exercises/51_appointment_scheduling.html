@@ -1,0 +1,185 @@
+<h2>Appointment Scheduling Analysis</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>You are given a table that tracks medical appointments and patient preferences. You need to analyze the nature of initial patient visits.</p>
+        
+        <p>Table: <code>MedicalAppointments</code></p>
+        <pre>
++--------------------------------+------+
+| Column Name                    | Type |
++--------------------------------+------+
+| appointment_id                 | int  |
+| patient_id                     | int  |
+| booking_date                   | date |
+| patient_pref_appointment_date  | date |
++--------------------------------+------+
+        </pre>
+        
+        <p><code>appointment_id</code> is the primary key for this table.<br>
+        The table contains information about medical appointments that patients book on a specific date (<code>booking_date</code>) and their preferred appointment date (<code>patient_pref_appointment_date</code>), which can be the same day or a future date.</p>
+        
+        <p>If the patient's preferred appointment date is the same as the booking date, the appointment is classified as <strong>urgent</strong>; otherwise, it is classified as <strong>regular</strong>.</p>
+        
+        <p>The <strong>initial visit</strong> of a patient is defined as the appointment with the earliest booking date for that patient. It is guaranteed that each patient has exactly one initial visit.</p>
+        
+        <p>Write a solution to find the percentage of urgent appointments among all initial visits, <strong>rounded to 2 decimal places</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>MedicalAppointments table:</p>
+        <pre>
+INSERT INTO MedicalAppointments VALUES
+(1, 101, '2023-01-15', '2023-01-15'),  -- Urgent appointment for patient 101
+(2, 102, '2023-01-17', '2023-01-20'),  -- Regular appointment for patient 102
+(3, 103, '2023-01-20', '2023-01-25'),  -- Regular appointment for patient 103
+(4, 101, '2023-02-10', '2023-02-15'),  -- Regular follow-up for patient 101
+(5, 104, '2023-02-12', '2023-02-12'),  -- Urgent appointment for patient 104
+(6, 102, '2023-02-15', '2023-02-15'),  -- Urgent follow-up for patient 102
+(7, 105, '2023-02-17', '2023-02-17'),  -- Urgent appointment for patient 105
+(8, 103, '2023-02-20', '2023-03-01'),  -- Regular follow-up for patient 103
+(9, 106, '2023-03-01', '2023-03-05'),  -- Regular appointment for patient 106
+(10, 107, '2023-03-10', '2023-03-10'); -- Urgent appointment for patient 107
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++-----------------------------+
+| urgent_appointment_percentage |
++-----------------------------+
+| 42.86                      |
++-----------------------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <p>Note: Out of the 7 patients (101 through 107), 3 had urgent initial appointments (patients 101, 104, 105, 107), which gives us (3/7)*100 = 42.86%</p>
+        </div>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Identify the initial visit for each patient (earliest booking_date)</li>
+            <li>Check if each initial visit is urgent (booking_date = patient_pref_appointment_date)</li>
+            <li>Calculate the percentage of urgent initial visits</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use a subquery to identify the initial visit for each patient. Then, we'll count how many of these initial visits are urgent and calculate the percentage.</p>
+
+      <p>This approach first finds the earliest booking_date for each patient, then joins this result back to the original table to get the complete appointment details. Finally, we calculate the percentage of urgent appointments.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use a Common Table Expression (CTE) to rank each appointment by booking_date within each patient group, then filter for only the initial visits (rank = 1).</p>
+
+      <p>This approach uses window functions to assign a rank to each appointment within the partition of its patient_id, ordered by booking_date. Then we filter for rank = 1 to get only the initial visits, and calculate the percentage of urgent appointments among these.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using Subquery for Initial Visits</h4>
+        <pre>
+SELECT 
+    ROUND(
+        (COUNT(CASE WHEN booking_date = patient_pref_appointment_date THEN 1 END) * 100.0) / 
+        COUNT(*),
+        2
+    ) AS urgent_appointment_percentage
+FROM 
+    MedicalAppointments a
+WHERE 
+    (a.patient_id, a.booking_date) IN (
+        SELECT 
+            patient_id, MIN(booking_date)
+        FROM 
+            MedicalAppointments
+        GROUP BY 
+            patient_id
+    )
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a subquery to find the earliest booking_date for each patient, which represents their initial visit. The main query then filters the appointments to only include these initial visits.</p>
+
+    <p>We use a CASE expression to count the number of urgent appointments (where booking_date equals patient_pref_appointment_date) among these initial visits. We divide this count by the total number of initial visits and multiply by 100 to get the percentage, then round to 2 decimal places.</p>
+</div>
+
+        <h4>Solution 2: Using Window Functions</h4>
+        <pre>
+WITH InitialVisits AS (
+    SELECT 
+        patient_id,
+        booking_date,
+        patient_pref_appointment_date,
+        ROW_NUMBER() OVER (PARTITION BY patient_id ORDER BY booking_date) AS visit_rank
+    FROM 
+        MedicalAppointments
+)
+SELECT 
+    ROUND(
+        (SUM(CASE WHEN booking_date = patient_pref_appointment_date THEN 1 ELSE 0 END) * 100.0) / 
+        COUNT(*),
+        2
+    ) AS urgent_appointment_percentage
+FROM 
+    InitialVisits
+WHERE 
+    visit_rank = 1
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a CTE with the ROW_NUMBER() window function to assign a rank to each appointment within each patient's group, ordered by booking_date. The first appointment (with rank 1) for each patient is their initial visit.</p>
+
+    <p>In the main query, we filter to only include these initial visits (where visit_rank = 1). We then use a CASE expression to count urgent appointments and calculate the percentage as in Solution 1.</p>
+</div>
+
+        <h4>Solution 3: Using FIRST_VALUE Window Function</h4>
+        <pre>
+SELECT 
+    ROUND(
+        (SUM(CASE WHEN is_initial = 1 AND is_urgent = 1 THEN 1 ELSE 0 END) * 100.0) / 
+        SUM(CASE WHEN is_initial = 1 THEN 1 ELSE 0 END),
+        2
+    ) AS urgent_appointment_percentage
+FROM (
+    SELECT 
+        *,
+        CASE WHEN booking_date = patient_pref_appointment_date THEN 1 ELSE 0 END AS is_urgent,
+        CASE WHEN booking_date = FIRST_VALUE(booking_date) OVER (
+                PARTITION BY patient_id 
+                ORDER BY booking_date
+                ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            ) THEN 1 ELSE 0 END AS is_initial
+    FROM 
+        MedicalAppointments
+) AS appointment_details
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses the FIRST_VALUE window function to identify the earliest booking_date for each patient directly in the subquery. We create flags for whether an appointment is urgent and whether it's an initial visit.</p>
+
+    <p>In the main query, we count the number of appointments that are both initial visits and urgent, divide by the total number of initial visits, and multiply by 100 to get the percentage.</p>
+
+    <p>This approach allows us to analyze all appointments in one pass through the data, which can be efficient for larger datasets.</p>
+</div>
+
+    </div> <!-- solutions section -->

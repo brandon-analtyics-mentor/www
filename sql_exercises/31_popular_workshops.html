@@ -1,0 +1,162 @@
+<h2>Popular Workshops</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>Workshops</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| attendee      | varchar |
+| workshop      | varchar |
++---------------+------+
+    </pre>
+    
+    <p>(attendee, workshop) is the primary key (combination of columns with unique values) for this table.<br>
+    Each row of this table indicates the name of an attendee and the workshop they have registered for.</p>
+    
+    <p>Write a solution to find all the workshops that have <strong>at least seven attendees</strong>.<br>
+    Return the result table in <strong>any order</strong>.<br>
+    The result format is in the following example.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>Workshops table:</p>
+    <pre>
++----------+-------------+
+| attendee | workshop    |
++----------+-------------+
+| Taylor   | Photography |
+| Jamie    | Cooking     |
+| Alex     | Photography |
+| Morgan   | Painting    |
+| Casey    | Photography |
+| Jordan   | Pottery     |
+| Riley    | Photography |
+| Quinn    | Photography |
+| Dakota   | Photography |
+| Blake    | Photography |
+| Avery    | Cooking     |
+| Charlie  | Coding      |
+| Emery    | Photography |
+| Parker   | Painting    |
++----------+-------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++-------------+
+| workshop    |
++-------------+
+| Photography |
++-------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>Photography has 8 attendees, so we include it.</li>
+            <li>Cooking has 2 attendees, so we do not include it.</li>
+            <li>Painting has 2 attendees, so we do not include it.</li>
+            <li>Pottery has 1 attendee, so we do not include it.</li>
+            <li>Coding has 1 attendee, so we do not include it.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- create the workshops table
+create table workshops (
+    attendee varchar,
+    workshop varchar,
+    primary key (attendee, workshop)
+);
+
+-- insert example data
+insert into workshops (attendee, workshop) values
+('Taylor', 'Photography'),
+('Jamie', 'Cooking'),
+('Alex', 'Photography'),
+('Morgan', 'Painting'),
+('Casey', 'Photography'),
+('Jordan', 'Pottery'),
+('Riley', 'Photography'),
+('Quinn', 'Photography'),
+('Dakota', 'Photography'),
+('Blake', 'Photography'),
+('Avery', 'Cooking'),
+('Charlie', 'Coding'),
+('Emery', 'Photography'),
+('Parker', 'Painting');
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Count the number of attendees for each workshop</li>
+        <li>Filter the workshops to include only those with at least 7 attendees</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use GROUP BY to count attendees for each workshop, then filter with HAVING.</p>
+
+  <p>This approach involves grouping the data by workshop, counting the number of attendees in each group, and then filtering to include only workshops that have at least 7 attendees.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using GROUP BY with HAVING</h4>
+    <pre>
+SELECT
+    workshop
+FROM
+    workshops
+GROUP BY
+    workshop
+HAVING
+    COUNT(attendee) >= 7;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution works by grouping the data by the workshop name and then counting the number of attendees in each group.</p>
+
+    <p>The HAVING clause filters the groups to include only those with at least 7 attendees. This directly answers the problem's requirement to find all workshops with at least seven attendees.</p>
+</div>
+
+    <h4>Solution 2: Using a Subquery with COUNT</h4>
+    <pre>
+SELECT
+    w.workshop
+FROM (
+    SELECT
+        workshop,
+        COUNT(attendee) as attendee_count
+    FROM
+        workshops
+    GROUP BY
+        workshop
+) w
+WHERE
+    w.attendee_count >= 7;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This alternative solution uses a subquery to first calculate the count of attendees for each workshop. The outer query then filters these results to include only workshops with at least 7 attendees.</p>
+
+    <p>While this approach is functionally equivalent to Solution 1, it's structured differently by separating the counting and filtering into distinct query levels. This might be preferred in situations where additional processing of the counts is needed.</p>
+</div>
+
+</div> <!-- solutions section -->

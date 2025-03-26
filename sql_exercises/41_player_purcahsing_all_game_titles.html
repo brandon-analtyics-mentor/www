@@ -1,0 +1,179 @@
+<h2>Players Purchasing All Game Titles</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>You are given two tables: <code>Player</code> and <code>GameTitle</code>.</p>
+    
+    <p>Table: <code>Player</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| player_id     | int  |
+| game_id       | int  |
++---------------+------+
+    </pre>
+    
+    <p>This table may contain duplicate rows.<br>
+    player_id is not NULL.<br>
+    game_id is a foreign key (reference column) to the GameTitle table.</p>
+    
+    <p>Table: <code>GameTitle</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| game_id       | int  |
++---------------+------+
+    </pre>
+    
+    <p>game_id is the primary key (column with unique values) for this table.</p>
+    
+    <p>Write a solution to report the player ids from the <code>Player</code> table that purchased all the games in the <code>GameTitle</code> table.</p>
+    
+    <p>Return the result table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>Player table:</p>
+    <pre>
++-------------+---------------+
+| player_id   | game_id       |
++-------------+---------------+
+| 101         | 301           |
+| 102         | 302           |
+| 103         | 301           |
+| 103         | 302           |
+| 101         | 302           |
++-------------+---------------+
+    </pre>
+    
+    <p>GameTitle table:</p>
+    <pre>
++-------------+
+| game_id     |
++-------------+
+| 301         |
+| 302         |
++-------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++-------------+
+| player_id   |
++-------------+
+| 101         |
+| 103         |
++-------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <p>The players who purchased all the games (301 and 302) are players with IDs 101 and 103.</p>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- Create the GameTitle table
+CREATE TABLE GameTitle (
+    game_id INT PRIMARY KEY
+);
+
+-- Create the Player table
+CREATE TABLE Player (
+    player_id INT,
+    game_id INT,
+    FOREIGN KEY (game_id) REFERENCES GameTitle(game_id)
+);
+
+-- Insert data into GameTitle table
+INSERT INTO GameTitle (game_id) VALUES
+(301),
+(302);
+
+-- Insert data into Player table
+INSERT INTO Player (player_id, game_id) VALUES
+(101, 301),
+(102, 302),
+(103, 301),
+(103, 302),
+(101, 302);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Find all players who have purchased every game in the GameTitle table</li>
+        <li>This means we need to match each player with the count of distinct games they've purchased</li>
+        <li>Then compare that count with the total number of games available</li>
+    </ul>
+</p>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using GROUP BY and COUNT with subquery</h4>
+    <pre>
+SELECT player_id
+FROM Player
+GROUP BY player_id
+HAVING COUNT(DISTINCT game_id) = (SELECT COUNT(*) FROM GameTitle);
+</pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 1:</strong></p>
+        <p>
+        This solution groups the players by their ID and counts the distinct games each player has purchased. We then compare this count with the total number of games in the GameTitle table using a subquery.</p>
+
+        <p>If the counts match, it means the player has purchased all available games, and we include that player in our result.</p>
+    </div>
+
+    <h4>Solution 2: Using INTERSECT and GROUP BY</h4>
+    <pre>
+SELECT player_id
+FROM (
+    SELECT player_id, COUNT(DISTINCT game_id) AS purchased_count
+    FROM Player
+    GROUP BY player_id
+) AS player_purchases
+WHERE purchased_count = (SELECT COUNT(*) FROM GameTitle);
+</pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 2:</strong></p>
+        <p>
+        This solution creates a subquery that counts the distinct games purchased by each player. We then filter this result to only include players whose purchased game count equals the total number of games available.</p>
+
+        <p>This approach is similar to Solution 1 but structures the query differently by using a derived table.</p>
+    </div>
+
+    <h4>Solution 3: Using NOT EXISTS with subquery</h4>
+    <pre>
+SELECT DISTINCT p.player_id
+FROM Player p
+WHERE NOT EXISTS (
+    SELECT g.game_id
+    FROM GameTitle g
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM Player p2
+        WHERE p2.player_id = p.player_id
+        AND p2.game_id = g.game_id
+    )
+);
+</pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 3:</strong></p>
+        <p>
+        This solution uses a different approach with nested NOT EXISTS subqueries. It finds players where there does not exist any game that the player has not purchased.</p>
+
+        <p>In other words, we're selecting players where for every game in the GameTitle table, there exists a corresponding purchase record for that player. This is a more complex but equally valid approach to solving the problem.</p>
+    </div>
+</div> <!-- solutions section -->

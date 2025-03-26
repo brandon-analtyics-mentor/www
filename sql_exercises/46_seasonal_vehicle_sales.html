@@ -1,0 +1,240 @@
+<h2>Seasonal Vehicle Sales Analysis</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Write a solution to report the <strong>vehicles</strong> that were <strong>only</strong> sold in the summer of <code>2022</code>. That is, between <code>2022-06-01</code> and <code>2022-08-31</code> inclusive.</p>
+        
+        <p>Return the result table in <strong>any order</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Tables</h3>
+        
+        <p>Table: <code>Vehicle</code></p>
+        <pre>
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| vehicle_id   | int     |
+| vehicle_model| varchar |
+| base_price   | int     |
++--------------+---------+
+        </pre>
+        
+        <p><code>vehicle_id</code> is the primary key (column with unique values) of this table.<br>
+        Each row of this table indicates the model and the base price of each vehicle.</p>
+        
+        <p>Table: <code>Transactions</code></p>
+        <pre>
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| dealership_id  | int     |
+| vehicle_id     | int     |
+| customer_id    | int     |
+| purchase_date  | date    |
+| units          | int     |
+| total_cost     | int     |
++----------------+---------+
+        </pre>
+        
+        <p>This table can have duplicate rows.<br>
+        <code>vehicle_id</code> is a foreign key (reference column) to the Vehicle table.<br>
+        Each row of this table contains information about one vehicle sale.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Vehicle table:</p>
+        <pre>
++-----------+--------------+------------+
+| vehicle_id| vehicle_model| base_price |
++-----------+--------------+------------+
+| 1         | Civic        | 22000      |
+| 2         | Outback      | 28000      |
+| 3         | Model Y      | 53000      |
++-----------+--------------+------------+
+        </pre>
+        
+        <p>Transactions table:</p>
+        <pre>
++--------------+-----------+-------------+--------------+-------+------------+
+| dealership_id| vehicle_id| customer_id | purchase_date| units | total_cost |
++--------------+-----------+-------------+--------------+-------+------------+
+| 1            | 1         | 101         | 2022-06-15   | 1     | 23500      |
+| 2            | 2         | 102         | 2022-07-05   | 1     | 29000      |
+| 2            | 2         | 103         | 2022-09-10   | 1     | 29500      |
+| 3            | 3         | 104         | 2022-08-22   | 1     | 55000      |
++--------------+-----------+-------------+--------------+-------+------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++-----------+--------------+
+| vehicle_id| vehicle_model|
++-----------+--------------+
+| 1         | Civic        |
+| 3         | Model Y      |
++-----------+--------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>The vehicle with id 1 (Civic) was only sold in the summer of 2022 (June 15).</li>
+                <li>The vehicle with id 2 (Outback) was sold in the summer of 2022 (July 5) but was also sold after the summer (September 10).</li>
+                <li>The vehicle with id 3 (Model Y) was only sold in the summer of 2022 (August 22).</li>
+                <li>We return vehicles 1 and 3 as they are the vehicles that were only sold during summer 2022.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create Vehicle table
+CREATE TABLE Vehicle (
+    vehicle_id INT PRIMARY KEY,
+    vehicle_model VARCHAR(255),
+    base_price INT
+);
+
+-- Insert data into Vehicle table
+INSERT INTO Vehicle (vehicle_id, vehicle_model, base_price)
+VALUES
+    (1, 'Civic', 22000),
+    (2, 'Outback', 28000),
+    (3, 'Model Y', 53000);
+
+-- Create Transactions table
+CREATE TABLE Transactions (
+    dealership_id INT,
+    vehicle_id INT,
+    customer_id INT,
+    purchase_date DATE,
+    units INT,
+    total_cost INT,
+    FOREIGN KEY (vehicle_id) REFERENCES Vehicle(vehicle_id)
+);
+
+-- Insert data into Transactions table
+INSERT INTO Transactions (dealership_id, vehicle_id, customer_id, purchase_date, units, total_cost)
+VALUES
+    (1, 1, 101, '2022-06-15', 1, 23500),
+    (2, 2, 102, '2022-07-05', 1, 29000),
+    (2, 2, 103, '2022-09-10', 1, 29500),
+    (3, 3, 104, '2022-08-22', 1, 55000);
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Find vehicles that have sales records during summer 2022 (June 1 to August 31)</li>
+            <li>Make sure these vehicles do not have any sales records outside of this date range</li>
+            <li>Report the vehicle_id and vehicle_model of these vehicles</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1: Using EXISTS and NOT EXISTS</strong></p>
+      
+      <p>We can use the EXISTS operator to find vehicles that were sold in summer 2022, and the NOT EXISTS operator to exclude vehicles that were sold in any other period.</p>
+
+      <p>This approach involves two subqueries: one to check for summer sales and another to check for non-summer sales. Only vehicles that satisfy both conditions are included in the result.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2: Using GROUP BY and HAVING</strong></p>
+      
+      <p>We can join the Vehicle and Transactions tables, group by vehicle, and use the HAVING clause to ensure all sales dates for a vehicle fall within the summer period.</p>
+
+      <p>This approach checks if the minimum and maximum purchase dates for each vehicle are both within the summer date range, ensuring all sales were during summer.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 3: Using WITH and Set Operations</strong></p>
+      
+      <p>We can use Common Table Expressions (CTEs) to identify vehicles sold in summer and vehicles sold outside of summer, then find vehicles that appear in the first set but not in the second.</p>
+
+      <p>This approach separates the problem into distinct parts, making it clearer to understand and potentially more efficient for larger datasets.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using EXISTS and NOT EXISTS</h4>
+        <pre>
+SELECT v.vehicle_id, v.vehicle_model
+FROM Vehicle v
+WHERE EXISTS (
+    SELECT 1
+    FROM Transactions t
+    WHERE t.vehicle_id = v.vehicle_id
+    AND t.purchase_date BETWEEN '2022-06-01' AND '2022-08-31'
+)
+AND NOT EXISTS (
+    SELECT 1
+    FROM Transactions t
+    WHERE t.vehicle_id = v.vehicle_id
+    AND (t.purchase_date < '2022-06-01' OR t.purchase_date > '2022-08-31')
+);
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses two subqueries with EXISTS and NOT EXISTS operators. The first subquery checks if a vehicle has at least one sale during summer 2022. The second subquery checks if the same vehicle has any sales outside of summer 2022.</p>
+
+    <p>We return vehicles that have summer sales (EXISTS subquery is true) AND do not have any non-summer sales (NOT EXISTS subquery is true). This precisely matches our requirement of finding vehicles sold only in summer 2022.</p>
+</div>
+
+        <h4>Solution 2: Using GROUP BY and HAVING</h4>
+        <pre>
+SELECT v.vehicle_id, v.vehicle_model
+FROM Vehicle v
+JOIN Transactions t ON v.vehicle_id = t.vehicle_id
+GROUP BY v.vehicle_id, v.vehicle_model
+HAVING MIN(t.purchase_date) >= '2022-06-01'
+   AND MAX(t.purchase_date) <= '2022-08-31';
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution joins the Vehicle and Transactions tables, then groups the results by vehicle ID and model. The HAVING clause ensures that for each vehicle, the earliest purchase date is on or after June 1, 2022, and the latest purchase date is on or before August 31, 2022.</p>
+
+    <p>If both conditions are true, it means all sales for that vehicle occurred within the summer period. This approach is concise and leverages aggregate functions effectively.</p>
+</div>
+
+        <h4>Solution 3: Using WITH and Set Operations</h4>
+        <pre>
+WITH summer_sales AS (
+    SELECT DISTINCT vehicle_id
+    FROM Transactions
+    WHERE purchase_date BETWEEN '2022-06-01' AND '2022-08-31'
+),
+non_summer_sales AS (
+    SELECT DISTINCT vehicle_id
+    FROM Transactions
+    WHERE purchase_date < '2022-06-01' OR purchase_date > '2022-08-31'
+)
+SELECT v.vehicle_id, v.vehicle_model
+FROM Vehicle v
+INNER JOIN summer_sales ss ON v.vehicle_id = ss.vehicle_id
+LEFT JOIN non_summer_sales nss ON v.vehicle_id = nss.vehicle_id
+WHERE nss.vehicle_id IS NULL;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses two Common Table Expressions (CTEs): one to identify vehicles sold during summer 2022 (summer_sales) and another to identify vehicles sold outside this period (non_summer_sales).</p>
+
+    <p>We then join the Vehicle table with the summer_sales CTE to get vehicles with summer sales, and perform a LEFT JOIN with non_summer_sales. The WHERE clause filters out vehicles that appear in the non_summer_sales CTE (where nss.vehicle_id IS NULL), leaving only vehicles that were sold exclusively in summer 2022.</p>
+
+    <p>This approach breaks down the problem into smaller, more manageable parts, making it easier to understand and maintain.</p>
+</div>
+
+    </div> <!-- solutions section -->

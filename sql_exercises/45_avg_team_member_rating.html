@@ -1,0 +1,168 @@
+<h2>Average Team Member Rating by Tournament</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>You are provided with the following tables:</p>
+    
+    <p>Table: <code>Tournament</code></p>
+    <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| tournament_id | int     |
+| player_id     | int     |
++---------------+---------+</pre>
+    
+    <p>(tournament_id, player_id) is the primary key of this table.<br>
+    player_id is a foreign key to Player table.<br>
+    Each row of this table indicates that the player with player_id is participating in the tournament with tournament_id.</p>
+    
+    <p>Table: <code>Player</code></p>
+    <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| player_id     | int     |
+| username      | varchar |
+| skill_rating  | int     |
++---------------+---------+</pre>
+    
+    <p>player_id is the primary key of this table.<br>
+    It's guaranteed that skill_rating is not NULL.<br>
+    Each row of this table contains information about one player.</p>
+    
+    <p>Write an SQL query that reports the <strong>average</strong> skill rating of all the players for each tournament, <strong>rounded to 2 decimal places</strong>. Return the result table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>Tournament table:</p>
+    <pre>
++---------------+---------+
+| tournament_id | player_id |
++---------------+---------+
+| 101           | 201     |
+| 101           | 202     |
+| 101           | 203     |
+| 102           | 201     |
+| 102           | 204     |
+| 103           | 202     |
+| 103           | 203     |
+| 103           | 204     |
++---------------+---------+</pre>
+    
+    <p>Player table:</p>
+    <pre>
++---------------+---------+---------+
+| player_id     | username| skill_rating |
++---------------+---------+---------+
+| 201           | Morgan  | 2800    |
+| 202           | Patel   | 2650    |
+| 203           | Chen    | 2900    |
+| 204           | Rodriguez | 2750  |
++---------------+---------+---------+</pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++---------------+---------+
+| tournament_id | average_rating |
++---------------+---------+
+| 101           | 2783.33 |
+| 102           | 2775.00 |
+| 103           | 2766.67 |
++---------------+---------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>The average skill rating for tournament 101 is (2800 + 2650 + 2900) / 3 = 2783.33</li>
+            <li>The average skill rating for tournament 102 is (2800 + 2750) / 2 = 2775.00</li>
+            <li>The average skill rating for tournament 103 is (2650 + 2900 + 2750) / 3 = 2766.67</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- Create the Tournament table
+CREATE TABLE Tournament (
+    tournament_id INT,
+    player_id INT,
+    PRIMARY KEY (tournament_id, player_id)
+);
+
+-- Create the Player table
+CREATE TABLE Player (
+    player_id INT PRIMARY KEY,
+    username VARCHAR,
+    skill_rating INT NOT NULL
+);
+
+-- Insert example data into Tournament
+INSERT INTO Tournament (tournament_id, player_id) VALUES
+(101, 201),
+(101, 202),
+(101, 203),
+(102, 201),
+(102, 204),
+(103, 202),
+(103, 203),
+(103, 204);
+
+-- Insert example data into Player
+INSERT INTO Player (player_id, username, skill_rating) VALUES
+(201, 'Morgan', 2800),
+(202, 'Patel', 2650),
+(203, 'Chen', 2900),
+(204, 'Rodriguez', 2750);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Join the Tournament and Player tables to get skill ratings for each player in each tournament</li>
+        <li>Group the results by tournament_id</li>
+        <li>Calculate the average skill rating for each tournament</li>
+        <li>Round the average to 2 decimal places</li>
+    </ul>
+</p>
+
+<div class="explanation">
+    <p><strong>Approach:</strong></p>
+    
+    <p>We'll use a JOIN operation to combine data from the Tournament and Player tables, matching records based on player_id.</p>
+    
+    <p>After joining, we'll group the results by tournament_id and calculate the average of skill_rating for each group using the AVG function. Finally, we'll use the ROUND function to format the result to 2 decimal places.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution: Using JOIN and GROUP BY</h4>
+    <pre>
+SELECT 
+    t.tournament_id, 
+    ROUND(AVG(p.skill_rating), 2) AS average_rating
+FROM 
+    Tournament t
+    JOIN Player p ON t.player_id = p.player_id
+GROUP BY 
+    t.tournament_id
+ORDER BY 
+    t.tournament_id;
+</pre>
+
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <p>
+        This solution works by joining the Tournament table with the Player table on the player_id column. This gives us access to the skill_rating for each player in each tournament.</p>
+
+        <p>We then group the results by tournament_id and calculate the average skill_rating for each tournament using the AVG function. The ROUND function is used to round the average to 2 decimal places as required.</p>
+        
+        <p>Finally, we order the results by tournament_id for better readability, although the problem states that the result can be returned in any order.</p>
+    </div>
+</div>

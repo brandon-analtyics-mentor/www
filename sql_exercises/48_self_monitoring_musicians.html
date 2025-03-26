@@ -1,0 +1,180 @@
+<h2>Musician Stream Monitoring</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>Streams</code></p>
+    <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| song_id       | int     |
+| musician_id   | int     |
+| listener_id   | int     |
+| stream_date   | date    |
++---------------+---------+
+    </pre>
+    
+    <p>There is no primary key (column with unique values) for this table, so the table may have duplicate rows.<br>
+    Each row of this table indicates that some listener streamed a song (composed by a musician) on a specific date.</p>
+    
+    <p><strong>Note:</strong> Equal musician_id and listener_id indicate the same person.</p>
+    
+    <p>Write a solution to find all the musicians who listened to at least one of their own songs.</p>
+    
+    <p>Return the result table sorted by <code>id</code> in ascending order.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>Streams table:</p>
+    <pre>
++----------+-------------+-------------+-------------+
+| song_id  | musician_id | listener_id | stream_date |
++----------+-------------+-------------+-------------+
+| 103      | 5           | 9           | 2023-04-12  |
+| 103      | 5           | 7           | 2023-04-15  |
+| 214      | 8           | 8           | 2023-04-12  |
+| 214      | 8           | 7           | 2023-04-13  |
+| 315      | 8           | 3           | 2023-03-25  |
+| 408      | 6           | 6           | 2023-03-22  |
+| 408      | 6           | 6           | 2023-03-22  |
++----------+-------------+-------------+-------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++-----+
+| id  |
++-----+
+| 6   |
+| 8   |
++-----+
+    </pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>Musician 6 streamed their own song (song_id: 408) on 2023-03-22 (appears twice in the table).</li>
+            <li>Musician 8 streamed their own song (song_id: 214) on 2023-04-12.</li>
+            <li>Musician 5 did not stream any of their own songs.</li>
+            <li>Therefore, the output includes the ids of musicians 6 and 8, sorted in ascending order.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- Create Streams table
+CREATE TABLE Streams (
+    song_id INT,
+    musician_id INT,
+    listener_id INT,
+    stream_date DATE
+);
+
+-- Insert sample data
+INSERT INTO Streams (song_id, musician_id, listener_id, stream_date) VALUES
+(103, 5, 9, '2023-04-12'),
+(103, 5, 7, '2023-04-15'),
+(214, 8, 8, '2023-04-12'),
+(214, 8, 7, '2023-04-13'),
+(315, 8, 3, '2023-03-25'),
+(408, 6, 6, '2023-03-22'),
+(408, 6, 6, '2023-03-22');
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Find all musician_ids where the musician has listened to their own song</li>
+        <li>This means finding records where musician_id equals listener_id</li>
+        <li>Sort the results by id in ascending order</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use a simple WHERE clause to filter records where the musician_id equals the listener_id. This directly identifies musicians who listened to their own songs.</p>
+
+  <p>This approach is straightforward and efficient, utilizing the condition mentioned in the problem description about equal musician_id and listener_id indicating the same person.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use an INNER JOIN approach to find musicians who have streamed their own songs by joining the Streams table with itself.</p>
+
+  <p>This approach joins records where the musician_id in one record matches the listener_id in another for the same song, ensuring we identify musicians who listened to songs they composed.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 3:</strong></p>
+  
+  <p>We can use an EXISTS subquery to check for the existence of records where a musician has listened to their own song.</p>
+
+  <p>This approach uses a correlated subquery to find cases where the song_id matches and the musician_id from the outer query equals the listener_id in the inner query.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using WHERE clause</h4>
+    <pre>
+SELECT DISTINCT musician_id AS id
+FROM Streams
+WHERE musician_id = listener_id
+ORDER BY id;
+    </pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 1:</strong></p>
+        <p>
+        This solution simply filters the Streams table to find records where the musician_id equals the listener_id, which directly identifies musicians who listened to their own songs. We use DISTINCT to eliminate duplicate results and sort by id in ascending order as required.</p>
+
+        <p>This is the most straightforward approach and likely the most efficient for this particular problem.</p>
+    </div>
+
+    <h4>Solution 2: Using INNER JOIN approach</h4>
+    <pre>
+SELECT DISTINCT s1.musician_id AS id
+FROM Streams s1
+INNER JOIN Streams s2 ON s1.musician_id = s2.listener_id AND s1.song_id = s2.song_id
+WHERE s1.musician_id = s2.musician_id
+ORDER BY id;
+    </pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 2:</strong></p>
+        <p>
+        This solution uses a self-join on the Streams table to find pairs of records where a musician has streamed their own song. We join on the condition that the musician_id in one record matches the listener_id in another for the same song_id.</p>
+
+        <p>The WHERE clause ensures that we're only looking at records where the musician_id is the same in both joined records, confirming that we're identifying the correct musicians.</p>
+    </div>
+
+    <h4>Solution 3: Using EXISTS subquery</h4>
+    <pre>
+SELECT DISTINCT s1.musician_id AS id
+FROM Streams s1
+WHERE EXISTS (
+    SELECT 1
+    FROM Streams s2
+    WHERE s2.song_id = s1.song_id
+    AND s2.musician_id = s1.musician_id
+    AND s2.listener_id = s1.musician_id
+)
+ORDER BY id;
+    </pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 3:</strong></p>
+        <p>
+        This solution uses an EXISTS subquery to check if there's at least one record where a musician has listened to their own song. The subquery looks for records where the song_id matches, the musician_id matches, and the listener_id equals the musician_id from the outer query.</p>
+
+        <p>This approach might be more readable for complex conditions and can be efficient since it only needs to find one matching record for the EXISTS condition to be satisfied.</p>
+    </div>
+</div> <!-- solutions section -->

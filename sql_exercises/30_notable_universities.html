@@ -1,0 +1,167 @@
+<h2>Notable Universities</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>University</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| institution   | varchar |
+| region        | varchar |
+| campus_size   | int  |
+| student_count | int  |
+| endowment     | bigint |
++---------------+------+
+        </pre>
+        
+        <p><code>institution</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table gives information about the name of a university, the region to which it belongs, its campus size (in acres), the number of students, and its endowment value in USD.</p>
+        
+        <p>A university is considered <strong>notable</strong> if:</p>
+        <ul>
+            <li>it has a campus size of at least fifty thousand acres (i.e., <code>50000 acres</code>), or</li>
+            <li>it has a student population of at least thirty thousand students (i.e., <code>30000</code>).</li>
+        </ul>
+        
+        <p>Write a solution to find the institution name, student count, and campus size of the <strong>notable universities</strong>.</p>
+        <p>Return the result table in <strong>any order</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>University table:</p>
+        <pre>
++--------------------+---------------+-------------+---------------+-------------+
+| institution        | region        | campus_size | student_count | endowment   |
++--------------------+---------------+-------------+---------------+-------------+
+| Stanford University| North America | 8180        | 17381         | 36300000000 |
+| MIT                | North America | 168         | 11934         | 27400000000 |
+| University of Tokyo| Asia          | 89600       | 26419         | 3600000000  |
+| Arizona State      | North America | 1989        | 74878         | 1125000000  |
+| Oxford University  | Europe        | 1862        | 24515         | 8200000000  |
++--------------------+---------------+-------------+---------------+-------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++--------------------+---------------+-------------+
+| institution        | student_count | campus_size |
++--------------------+---------------+-------------+
+| University of Tokyo| 26419         | 89600       |
+| Arizona State      | 74878         | 1989        |
++--------------------+---------------+-------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>University of Tokyo meets the notable criteria because its campus size is larger than 50,000 acres.</li>
+                <li>Arizona State meets the notable criteria because its student count exceeds 30,000.</li>
+                <li>The other universities don't meet either criteria, so they aren't included in the result.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the university table
+create table university (
+    institution varchar primary key,
+    region varchar,
+    campus_size int,
+    student_count int,
+    endowment bigint
+);
+
+-- insert example data
+insert into university (institution, region, campus_size, student_count, endowment) values
+('Stanford University', 'North America', 8180, 17381, 36300000000),
+('MIT', 'North America', 168, 11934, 27400000000),
+('University of Tokyo', 'Asia', 89600, 26419, 3600000000),
+('Arizona State', 'North America', 1989, 74878, 1125000000),
+('Oxford University', 'Europe', 1862, 24515, 8200000000);
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Find universities where campus_size ≥ 50,000 acres</li>
+            <li>Find universities where student_count ≥ 30,000</li>
+            <li>Return the institution name, student count, and campus size for these notable universities</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use a simple WHERE clause with OR conditions to filter universities that meet either of the notable criteria.</p>
+
+      <p>This approach directly translates the problem requirements into SQL conditions and selects only the columns we need for the output.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using Simple WHERE Conditions</h4>
+        <pre>
+SELECT
+    institution,
+    student_count,
+    campus_size
+FROM
+    university
+WHERE
+    campus_size >= 50000 OR student_count >= 30000
+ORDER BY
+    institution;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution works by directly filtering the university table with a WHERE clause that implements the "notable" criteria. We select only universities where either:</p>
+    <ul>
+        <li>The campus_size is at least 50,000 acres, OR</li>
+        <li>The student_count is at least 30,000 students</li>
+    </ul>
+    <p>We then select only the three columns requested in the output: institution, student_count, and campus_size. The ORDER BY clause is optional since the problem states the result can be returned in any order.</p>
+</div>
+
+        <h4>Solution 2: Using UNION</h4>
+        <pre>
+SELECT
+    institution,
+    student_count,
+    campus_size
+FROM
+    university
+WHERE
+    campus_size >= 50000
+
+UNION
+
+SELECT
+    institution,
+    student_count,
+    campus_size
+FROM
+    university
+WHERE
+    student_count >= 30000;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses UNION to combine the results of two separate queries:</p>
+    <ul>
+        <li>The first query selects universities with a campus size of at least 50,000 acres</li>
+        <li>The second query selects universities with a student count of at least 30,000</li>
+    </ul>
+    <p>UNION automatically removes duplicates, so if a university meets both criteria, it will only appear once in the result. This approach makes the filtering logic more explicit but may be slightly less efficient than the first solution for simple cases like this.</p>
+</div>
+    </div> <!-- solutions section -->

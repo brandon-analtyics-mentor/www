@@ -1,0 +1,187 @@
+<h2>SQL Challenge: Tracking Pollution Levels</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>AirQuality</code></p>
+    <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| reading_id    | int     |
+| sample_date   | date    |
+| pollution     | int     |
++---------------+---------+
+    </pre>
+    
+    <p><code>reading_id</code> is the column with unique values for this table.<br>
+    There are no different rows with the same <code>sample_date</code>.<br>
+    This table contains information about the pollution level on a certain day.</p>
+    
+    <p>Write a solution to find all reading IDs where the pollution level is higher than the previous day's reading.</p>
+    
+    <p>Return the result table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>AirQuality table:</p>
+    <pre>
++------------+------------+------------+
+| reading_id | sample_date| pollution  |
++------------+------------+------------+
+| 1          | 2023-08-10 | 35         |
+| 2          | 2023-08-11 | 42         |
+| 3          | 2023-08-12 | 38         |
+| 4          | 2023-08-13 | 45         |
+| 5          | 2023-08-14 | 40         |
++------------+------------+------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++------------+
+| reading_id |
++------------+
+| 2          |
+| 4          |
++------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>On 2023-08-11, the pollution level was higher than the previous day (35 -> 42).</li>
+            <li>On 2023-08-13, the pollution level was higher than the previous day (38 -> 45).</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- create the airquality table
+create table airquality (
+    reading_id int primary key,
+    sample_date date,
+    pollution int
+);
+
+-- insert example data
+insert into airquality (reading_id, sample_date, pollution) values
+(1, '2023-08-10', 35),
+(2, '2023-08-11', 42),
+(3, '2023-08-12', 38),
+(4, '2023-08-13', 45),
+(5, '2023-08-14', 40);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Compare each day's pollution level with the previous day's reading</li>
+        <li>Find all reading IDs where the pollution level is higher than the previous day</li>
+        <li>Return these reading IDs in any order</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use a self-join to compare each day's pollution level with the previous day. We'll join the table with itself on the condition that one record's date is exactly one day after another record's date.</p>
+
+  <p>This approach pairs each day with its previous day, allowing us to compare pollution levels directly and filter for cases where the current day's pollution is higher.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use window functions to access the previous day's pollution level for each record. Specifically, we can use the LAG() function to retrieve the pollution level from the previous row when ordered by sample_date.</p>
+
+  <p>This approach is typically more efficient as it avoids the overhead of a self-join operation.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using Self-Join</h4>
+    <pre>
+SELECT 
+    current.reading_id
+FROM 
+    airquality current
+JOIN 
+    airquality previous
+ON 
+    current.sample_date = previous.sample_date + INTERVAL '1 day'
+WHERE 
+    current.pollution > previous.pollution
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a self-join to pair each day with its previous day. We join the AirQuality table with itself where one record's sample_date is exactly one day after another record's sample_date.</p>
+
+    <p>Then we filter for cases where the current day's pollution level is higher than the previous day's pollution level. The query returns the reading_id of these records.</p>
+</div>
+
+    <h4>Solution 2: Using Window Functions</h4>
+    <pre>
+SELECT 
+    reading_id
+FROM 
+    (
+        SELECT 
+            reading_id,
+            pollution,
+            LAG(pollution) OVER (ORDER BY sample_date) AS prev_pollution
+        FROM 
+            airquality
+    ) subquery
+WHERE 
+    pollution > prev_pollution
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses the LAG() window function to access the previous day's pollution level for each record. We create a subquery that includes each reading's pollution level and the pollution level from the previous day (ordered by sample_date).</p>
+
+    <p>Then we filter for cases where the current pollution level is higher than the previous day's pollution level. The query returns the reading_id of these records.</p>
+</div>
+
+    <h4>Solution 3: Using a CTE with Window Function</h4>
+    <pre>
+WITH pollution_comparison AS (
+    SELECT 
+        reading_id,
+        pollution,
+        LAG(pollution) OVER (ORDER BY sample_date) AS prev_pollution
+    FROM 
+        airquality
+)
+
+SELECT 
+    reading_id
+FROM 
+    pollution_comparison
+WHERE 
+    pollution > prev_pollution
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution is similar to Solution 2 but uses a Common Table Expression (CTE) for better readability. The CTE named pollution_comparison contains each reading's pollution level and the pollution level from the previous day.</p>
+
+    <p>Then we select the reading_id from the CTE where the current pollution level is higher than the previous day's pollution level.</p>
+
+    <p>This approach improves code organization and makes the query intent clearer, which is beneficial for maintenance and understanding.</p>
+</div>
+
+</div> <!-- solutions section -->

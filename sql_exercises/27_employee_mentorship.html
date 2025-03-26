@@ -1,0 +1,197 @@
+<h2>Employee Mentorship Query</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Employee</code></p>
+        <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| employee_id   | int     |
+| employee_name | varchar |
+| mentor_id     | int     |
++---------------+---------+
+        </pre>
+        
+        <p>In the database, <code>employee_id</code> is the primary key column for this table.<br>
+        Each row of this table contains the ID of an employee, their name, and the ID of the employee who mentors them.</p>
+        
+        <p>Find the names of all employees who are <strong>not mentored by</strong> the employee with <code>employee_id = 3</code>.</p>
+        
+        <p>Return the result table in <strong>any order</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Employee table:</p>
+        <pre>
++-------------+---------------+-----------+
+| employee_id | employee_name | mentor_id |
++-------------+---------------+-----------+
+| 1           | Sarah         | null      |
+| 2           | Michael       | null      |
+| 3           | David         | null      |
+| 4           | Emily         | 3         |
+| 5           | James         | 1         |
+| 6           | Robert        | 3         |
+| 7           | Thomas        | 2         |
+| 8           | Lisa          | null      |
++-------------+---------------+-----------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++---------------+
+| employee_name |
++---------------+
+| Sarah         |
+| Michael       |
+| David         |
+| James         |
+| Thomas        |
+| Lisa          |
++---------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <p>The employees not mentored by employee_id = 3 (David) are:</p>
+            <ul>
+                <li>Sarah (mentored by no one)</li>
+                <li>Michael (mentored by no one)</li>
+                <li>David himself (mentored by no one)</li>
+                <li>James (mentored by Sarah, employee_id = 1)</li>
+                <li>Thomas (mentored by Michael, employee_id = 2)</li>
+                <li>Lisa (mentored by no one)</li>
+            </ul>
+            <p>Emily and Robert are mentored by David (employee_id = 3), so they are not included in the result.</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the employee table
+create table employee (
+    employee_id int primary key,
+    employee_name varchar,
+    mentor_id int
+);
+
+-- insert example data
+insert into employee (employee_id, employee_name, mentor_id) values
+(1, 'Sarah', null),
+(2, 'Michael', null),
+(3, 'David', null),
+(4, 'Emily', 3),
+(5, 'James', 1),
+(6, 'Robert', 3),
+(7, 'Thomas', 2),
+(8, 'Lisa', null);
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Find all employees in the Employee table</li>
+            <li>Filter out employees who have mentor_id = 3</li>
+            <li>Return the names of the remaining employees</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use a simple WHERE clause to filter out employees with mentor_id = 3. We need to select all employees where either mentor_id is not 3 or mentor_id is NULL.</p>
+
+      <p>This approach is straightforward and efficient as it directly filters the data we need without any complex operations.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use a NOT IN subquery to exclude employees who are mentored by employee with ID 3. This approach is particularly useful if the relationship might be tracked in a separate table.</p>
+
+      <p>This solution still ensures we get all employees not mentored by employee_id = 3, including those with NULL mentor_id values.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using Simple WHERE Clause</h4>
+        <pre>
+SELECT
+  employee_name
+FROM
+  employee
+WHERE
+  mentor_id != 3 OR mentor_id IS NULL
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a simple WHERE clause to filter employees. We need two conditions:</p>
+    <p>1. mentor_id != 3 - This excludes employees directly mentored by employee_id 3</p>
+    <p>2. mentor_id IS NULL - This includes employees with no mentor at all</p>
+
+    <p>We combine these with OR because we want to include both groups in our results. This approach is efficient and easy to understand.</p>
+</div>
+
+        <h4>Solution 2: Using NOT IN</h4>
+        <pre>
+SELECT
+  employee_name
+FROM
+  employee
+WHERE
+  employee_id NOT IN (
+    SELECT
+      e.employee_id
+    FROM
+      employee e
+    WHERE
+      e.mentor_id = 3
+  )
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a NOT IN subquery to exclude employees who are mentored by employee_id = 3. The inner query finds all employee_ids with mentor_id = 3, and the outer query selects employee names for all employees not in that list.</p>
+
+    <p>This approach is slightly more complex but may be more intuitive for some users. It's especially useful if the mentorship relationship might be defined in a separate table in more complex scenarios.</p>
+</div>
+
+        <h4>Solution 3: Using LEFT JOIN</h4>
+        <pre>
+SELECT
+  e.employee_name
+FROM
+  employee e
+  LEFT JOIN (
+    SELECT
+      employee_id
+    FROM
+      employee
+    WHERE
+      mentor_id = 3
+  ) mentored_by_3 ON e.employee_id = mentored_by_3.employee_id
+WHERE
+  mentored_by_3.employee_id IS NULL
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a LEFT JOIN with a subquery that identifies employees mentored by employee_id = 3. The LEFT JOIN preserves all rows from the employee table, and the WHERE clause then filters to keep only rows where no match was found in the subquery results (i.e., employees not mentored by employee_id = 3).</p>
+
+    <p>This approach might be useful in more complex scenarios where additional conditions or joins are needed, as it can be extended more easily than the other approaches.</p>
+</div>
+
+    </div> <!-- solutions section -->

@@ -1,0 +1,65 @@
+<h2>Senior Scientists with Multiple Research Assistants</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Researcher</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| researcher_id | int  |
+| researcher_name | varchar |
+| research_area | varchar |
+| supervisor_id | int  |
++---------------+------+
+        </pre>
+        
+        <p><code>researcher_id</code> is the primary key (column with unique values) for this table.<br>
+        Each row of this table indicates the name of a researcher, their research area, and the id of their supervisor.<br>
+        If <code>supervisor_id</code> is null, then the researcher does not have a supervisor (they are a senior scientist).<br>
+        No researcher will be the supervisor of themselves.</p>
+        
+        <p>Write a solution to find senior scientists who supervise at least <strong>four research assistants</strong>.</p>
+        
+        <p>Return the result table in <strong>any order</strong>.</p>
+        
+        <p>The result format is in the following example.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Researcher table:</p>
+        <pre>
++---------------+---------------+---------------+---------------+
+| researcher_id | researcher_name | research_area | supervisor_id |
++---------------+---------------+---------------+---------------+
+| 201           | Maria         | Genetics      | null          |
+| 202           | Alex          | Genetics      | 201           |
+| 203           | Sarah         | Genetics      | 201           |
+| 204           | Thomas        | Genetics      | 201           |
+| 205           | Lisa          | Genetics      | 201           |
+| 206           | Robert        | Microbiology  | 208           |
+| 207           | David         | Genetics      | 201           |
+| 208           | Elena         | Microbiology  | null          |
+| 209           | Michael       | Microbiology  | 208           |
+| 210           | Carol         | Microbiology  | 208           |
++---------------+---------------+---------------+---------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++---------------+
+| researcher_name |
++---------------+
+| Maria         |
++---------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>Maria (researcher_id = 201) supervises 5 research assistants: Alex, Sarah, Thomas, Lisa, and David.</li>
+                <li>Elena (researcher_id = 208) supervises 3 research assistants: Robert, Michael, and Carol. Since this is less than 4, Elena is not included in the result.</li>
+            </ul>
+        </div>
+    </div>

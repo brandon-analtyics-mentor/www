@@ -1,0 +1,139 @@
+<h2>Bookstore Recommendations</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Write a solution to report the books with an even-numbered <code>book_id</code> and a genre that is not <code>"textbook"</code>.</p>
+        <p>Return the result table ordered by <code>score</code> <strong>in descending order</strong>.</p>
+        
+        <p>Table: <code>Books</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| book_id       | int  |
+| title         | varchar |
+| genre         | varchar |
+| score         | float |
++---------------+------+
+        </pre>
+        
+        <p><code>book_id</code> is the primary key (column with unique values) for this table.<br>
+        Each row contains information about the title of a book, its genre, and its reader score.<br>
+        <code>score</code> is a 2 decimal places float in the range [0, 10]</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Books table:</p>
+        <pre>
++----------+----------------------+------------+-------+
+| book_id  | title                | genre      | score |
++----------+----------------------+------------+-------+
+| 1        | Data Structures      | textbook   | 7.8   |
+| 2        | The Silent Patient   | thriller   | 9.2   |
+| 3        | Database Fundamentals| textbook   | 8.4   |
+| 4        | Dune                 | sci-fi     | 9.0   |
+| 5        | The Hobbit           | fantasy    | 8.7   |
+| 6        | Clean Code           | programming| 8.5   |
++----------+----------------------+------------+-------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++----------+----------------------+------------+-------+
+| book_id  | title                | genre      | score |
++----------+----------------------+------------+-------+
+| 2        | The Silent Patient   | thriller   | 9.2   |
+| 4        | Dune                 | sci-fi     | 9.0   |
+| 6        | Clean Code           | programming| 8.5   |
++----------+----------------------+------------+-------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <p>We have three books with even-numbered book_ids: 2, 4, and 6. None of these books have the genre "textbook" so all are included in the answer, sorted by their scores in descending order.</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the Books table
+CREATE TABLE Books (
+    book_id INT PRIMARY KEY,
+    title VARCHAR(100),
+    genre VARCHAR(50),
+    score DECIMAL(3,1)
+);
+
+-- Insert sample data
+INSERT INTO Books (book_id, title, genre, score) VALUES
+(1, 'Data Structures', 'textbook', 7.8),
+(2, 'The Silent Patient', 'thriller', 9.2),
+(3, 'Database Fundamentals', 'textbook', 8.4),
+(4, 'Dune', 'sci-fi', 9.0),
+(5, 'The Hobbit', 'fantasy', 8.7),
+(6, 'Clean Code', 'programming', 8.5);
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Filter for books with even-numbered book_ids</li>
+            <li>Exclude books with the genre "textbook"</li>
+            <li>Sort the results by score in descending order</li>
+        </ul>
+    </p>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using the MOD function</h4>
+        <pre>
+SELECT book_id, title, genre, score
+FROM Books
+WHERE book_id % 2 = 0 AND genre != 'textbook'
+ORDER BY score DESC;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses the modulo operator (%) to check if book_id is even. When a number is divided by 2, if the remainder is 0, then the number is even. We also add a condition to exclude any books with the genre "textbook". Finally, we order the results by score in descending order.</p>
+</div>
+
+        <h4>Solution 2: Using bitwise AND operation</h4>
+        <pre>
+SELECT book_id, title, genre, score
+FROM Books
+WHERE (book_id & 1) = 0 AND genre <> 'textbook'
+ORDER BY score DESC;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a bitwise AND operation to check if book_id is even. When a number is ANDed with 1, if the result is 0, then the number is even (the last bit is 0). We also exclude books with the genre "textbook" and order by score in descending order.</p>
+</div>
+
+        <h4>Solution 3: Using CASE expression</h4>
+        <pre>
+SELECT book_id, title, genre, score
+FROM Books
+WHERE 
+    CASE 
+        WHEN book_id % 2 = 0 AND genre != 'textbook' THEN TRUE
+        ELSE FALSE
+    END
+ORDER BY score DESC;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a CASE expression in the WHERE clause to evaluate both conditions. It checks if the book_id is even and the genre is not "textbook". If both conditions are true, it returns TRUE, otherwise FALSE. Only rows that evaluate to TRUE are included in the result, which is then ordered by score in descending order.</p>
+</div>
+
+    </div> <!-- solutions section -->

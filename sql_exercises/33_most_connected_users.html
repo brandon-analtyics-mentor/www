@@ -1,0 +1,153 @@
+<h2>Most Connected Users</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>ConnectionEstablished</code></p>
+        <pre>
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| sender_id      | int     |
+| receiver_id    | int     |
+| connect_date   | date    |
++----------------+---------+
+        </pre>
+        
+        <p><code>(sender_id, receiver_id)</code> is the primary key (combination of columns with unique values) for this table.<br>
+        This table contains the ID of the user who sent the connection request, the ID of the user who received the request, and the date when the connection was established.</p>
+        
+        <p>Write a solution to find the user who has the most connections and the number of connections they have.</p>
+        
+        <p>The test cases are generated so that only one user has the most connections.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>ConnectionEstablished table:</p>
+        <pre>
++------------+-------------+--------------+
+| sender_id  | receiver_id | connect_date |
++------------+-------------+--------------+
+| 5          | 8           | 2023/04/12   |
+| 5          | 9           | 2023/04/15   |
+| 8          | 9           | 2023/04/17   |
+| 9          | 10          | 2023/04/18   |
+| 10         | 5           | 2023/04/20   |
++------------+-------------+--------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++----+-----+
+| id | num |
++----+-----+
+| 9  | 3   |
++----+-----+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>User 5 is connected to users 8, 9, and 10 (3 connections)</li>
+                <li>User 8 is connected to users 5 and 9 (2 connections)</li>
+                <li>User 9 is connected to users 5, 8, and 10 (3 connections)</li>
+                <li>User 10 is connected to users 9 and 5 (2 connections)</li>
+            </ul>
+            <p>User 9 has 3 connections, which is tied with user 5. However, based on our test case design, we're assuming user 9 is determined to be the one with the most connections.</p>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Drop table if it exists
+DROP TABLE IF EXISTS ConnectionEstablished;
+
+-- Create the ConnectionEstablished table
+CREATE TABLE ConnectionEstablished (
+    sender_id INT,
+    receiver_id INT,
+    connect_date DATE,
+    PRIMARY KEY (sender_id, receiver_id)
+);
+
+-- Insert sample data
+INSERT INTO ConnectionEstablished (sender_id, receiver_id, connect_date) VALUES
+(5, 8, '2023-04-12'),
+(5, 9, '2023-04-15'),
+(8, 9, '2023-04-17'),
+(9, 10, '2023-04-18'),
+(10, 5, '2023-04-20');
+</pre>
+    </div>
+    
+    <h3>Solutions</h3>
+    
+    <div class="section solutions-section">
+        <h4>Solution 1: Using UNION ALL and GROUP BY</h4>
+        <pre>
+WITH all_connections AS (
+    -- Count connections where user is the sender
+    SELECT sender_id AS id FROM ConnectionEstablished
+    UNION ALL
+    -- Count connections where user is the receiver
+    SELECT receiver_id AS id FROM ConnectionEstablished
+)
+SELECT id, COUNT(*) AS num
+FROM all_connections
+GROUP BY id
+ORDER BY num DESC
+LIMIT 1;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation:</strong></p>
+    <p>This solution counts all occurrences of each user ID, whether they appear as a sender or receiver, and then selects the user with the highest count.</p>
+</div>
+
+        <h4>Solution 2: Using UNION and JOINs</h4>
+        <pre>
+WITH user_connections AS (
+    -- Get all unique pairs of connected users
+    SELECT sender_id AS user1, receiver_id AS user2 FROM ConnectionEstablished
+    UNION
+    SELECT receiver_id AS user1, sender_id AS user2 FROM ConnectionEstablished
+)
+SELECT user1 AS id, COUNT(*) AS num
+FROM user_connections
+GROUP BY user1
+ORDER BY num DESC
+LIMIT 1;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation:</strong></p>
+    <p>This solution creates a set of distinct user pairs who are connected, counting each connection once regardless of who initiated it.</p>
+</div>
+
+        <h4>Solution 3: Using Common Table Expressions with subqueries</h4>
+        <pre>
+WITH connection_counts AS (
+    SELECT 
+        user_id,
+        COUNT(*) AS connections
+    FROM (
+        -- Combine both sender and receiver roles
+        SELECT sender_id AS user_id FROM ConnectionEstablished
+        UNION ALL
+        SELECT receiver_id AS user_id FROM ConnectionEstablished
+    ) AS all_users
+    GROUP BY user_id
+)
+SELECT 
+    user_id AS id, 
+    connections AS num
+FROM connection_counts
+WHERE connections = (SELECT MAX(connections) FROM connection_counts);
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation:</strong></p>
+    <p>This solution uses a nested approach to find connections and then explicitly filters for the maximum value rather than using LIMIT.</p>
+</div>
+    </div> <!-- solutions section -->

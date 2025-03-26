@@ -1,0 +1,242 @@
+<h2>File System Hierarchy Classification</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>FileSystem</code></p>
+    <pre>
++-------------+------+
+| Column Name | Type |
++-------------+------+
+| file_id     | int  |
+| parent_id   | int  |
++-------------+------+
+    </pre>
+    
+    <p><code>file_id</code> is the primary key column for this table.<br>
+    Each row of this table contains information about the ID of a file and the ID of its parent directory in a file system.<br>
+    The given structure is always a valid file system hierarchy.</p>
+    
+    <p>Each file in the system can be one of three types:</p>
+    <ul>
+        <li><strong>"File"</strong>: if the node has a parent but is not a parent to any other node.</li>
+        <li><strong>"Root"</strong>: if the node has no parent (parent_id is null).</li>
+        <li><strong>"Directory"</strong>: If the node has both a parent and is a parent to at least one other node.</li>
+    </ul>
+    
+    <p>Write a solution to classify each node in the file system.</p>
+    <p>Return the result table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example 1</h3>
+    
+    <p><strong>Input:</strong><br>FileSystem table:</p>
+    <pre>
++---------+-----------+
+| file_id | parent_id |
++---------+-----------+
+| 1       | null      |
+| 2       | 1         |
+| 3       | 1         |
+| 4       | 2         |
+| 5       | 2         |
+| 6       | 3         |
++---------+-----------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++---------+------------+
+| file_id | type       |
++---------+------------+
+| 1       | Root       |
+| 2       | Directory  |
+| 3       | Directory  |
+| 4       | File       |
+| 5       | File       |
+| 6       | File       |
++---------+------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>Node 1 is the root directory because its parent is null and it has child nodes 2 and 3.</li>
+            <li>Node 2 is a directory because it has parent node 1 and child nodes 4 and 5.</li>
+            <li>Node 3 is a directory because it has parent node 1 and child node 6.</li>
+            <li>Nodes 4, 5, and 6 are files because they have parent nodes but they do not have child nodes.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>Example 2</h3>
+    
+    <p><strong>Input:</strong><br>FileSystem table:</p>
+    <pre>
++---------+-----------+
+| file_id | parent_id |
++---------+-----------+
+| 1       | null      |
+| 2       | 1         |
++---------+-----------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++---------+------------+
+| file_id | type       |
++---------+------------+
+| 1       | Root       |
+| 2       | File       |
++---------+------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>Node 1 is the root directory because its parent is null and it has child node 2.</li>
+            <li>Node 2 is a file because it has a parent node but is not a parent to any other node.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- create the filesystem table
+create table filesystem (
+    file_id int primary key,
+    parent_id int
+);
+
+-- insert example data
+insert into filesystem (file_id, parent_id) values
+(1, null),
+(2, 1),
+(3, 1),
+(4, 2),
+(5, 2),
+(6, 3);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Identify nodes with no parent (parent_id is null) as "Root"</li>
+        <li>Identify nodes that are parents to other nodes but also have parents themselves as "Directory"</li>
+        <li>Identify nodes that have parents but are not parents to any other node as "File"</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use conditional logic with CASE statements to classify each node based on whether it has a parent and whether it is a parent to any other node.</p>
+
+  <p>This approach requires checking if parent_id is null and also checking if the file_id appears as a parent_id for any other node in the table.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use subqueries or joins to identify which nodes are parents to other nodes, then use that information to classify each node.</p>
+
+  <p>This approach involves creating a set of file_ids that are parents to other nodes, then using this information along with the parent_id value to determine the classification.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using CASE Expressions with Subqueries</h4>
+    <pre>
+SELECT
+    f.file_id,
+    CASE
+        WHEN f.parent_id IS NULL THEN 'Root'
+        WHEN EXISTS (
+            SELECT 1 
+            FROM filesystem 
+            WHERE parent_id = f.file_id
+        ) THEN 'Directory'
+        ELSE 'File'
+    END AS type
+FROM
+    filesystem f
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a CASE expression to classify each node based on the conditions specified in the problem:
+    </p>
+    <ul>
+        <li>If parent_id is NULL, the node is a "Root".</li>
+        <li>If the file_id appears as a parent_id for any other node, it's a "Directory".</li>
+        <li>Otherwise, it's a "File".</li>
+    </ul>
+    <p>
+    The EXISTS subquery efficiently checks if the current node is a parent to any other node.
+    </p>
+</div>
+
+    <h4>Solution 2: Using Left Join and CASE</h4>
+    <pre>
+SELECT
+    f1.file_id,
+    CASE
+        WHEN f1.parent_id IS NULL THEN 'Root'
+        WHEN f2.file_id IS NOT NULL THEN 'Directory'
+        ELSE 'File'
+    END AS type
+FROM
+    filesystem f1
+LEFT JOIN
+    (SELECT DISTINCT parent_id FROM filesystem WHERE parent_id IS NOT NULL) AS f2
+ON
+    f1.file_id = f2.parent_id
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a LEFT JOIN to determine if a node is a parent to any other node. The subquery creates a distinct list of parent_ids (which are file_ids that are parents to other nodes).</p>
+
+    <p>If the join finds a match, it means the current node is a parent to at least one other node. Combined with checking if parent_id is NULL, we can classify each node as "Root", "Directory", or "File".</p>
+</div>
+
+    <h4>Solution 3: Using Common Table Expression (CTE)</h4>
+    <pre>
+WITH parent_nodes AS (
+    SELECT DISTINCT parent_id
+    FROM filesystem
+    WHERE parent_id IS NOT NULL
+)
+
+SELECT
+    f.file_id,
+    CASE
+        WHEN f.parent_id IS NULL THEN 'Root'
+        WHEN p.parent_id IS NOT NULL THEN 'Directory'
+        ELSE 'File'
+    END AS type
+FROM
+    filesystem f
+LEFT JOIN
+    parent_nodes p ON f.file_id = p.parent_id
+;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a Common Table Expression (CTE) to first create a set of all nodes that are parents to other nodes. Then, it joins this CTE with the main table to classify each node.</p>
+
+    <p>The approach is similar to Solution 2 but uses a CTE for better readability and potentially better performance in some database systems, especially for more complex queries.</p>
+
+    <p>The classification logic remains the same: check if parent_id is NULL for "Root", check if the node is in the parent_nodes set for "Directory", otherwise it's a "File".</p>
+</div>
+
+</div>

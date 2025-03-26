@@ -1,0 +1,149 @@
+<h2>User Session Analysis</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>UserSessions</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| user_id       | int  |
+| platform_id   | int  |
+| login_date    | date |
+| minutes_used  | int  |
++---------------+------+
+        </pre>
+        
+        <p><code>(user_id, login_date)</code> is the primary key of this table. Each row represents a user logging in and using a platform for some number of minutes before logging out on a specific date.</p>
+        
+        <p>Write a solution to find the <strong>earliest login date</strong> for each user. Return the result table in <strong>any order</strong>.</p>
+        
+        <p>The result format is in the following example.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>UserSessions table:</p>
+        <pre>
++-------------+---------------+---------------+---------------+
+| user_id     | platform_id   | login_date    | minutes_used  |
++-------------+---------------+---------------+---------------+
+| 101         | 5             | 2023-01-14    | 45            |
+| 101         | 5             | 2023-03-22    | 30            |
+| 102         | 8             | 2023-05-08    | 12            |
+| 103         | 4             | 2023-01-15    | 0             |
+| 103         | 9             | 2023-08-10    | 28            |
++-------------+---------------+---------------+---------------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++-------------+---------------+
+| user_id     | first_session |
++-------------+---------------+
+| 101         | 2023-01-14    |
+| 102         | 2023-05-08    |
+| 103         | 2023-01-15    |
++-------------+---------------+</pre>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- PostgreSQL Table Setup
+CREATE TABLE UserSessions (
+    user_id INT,
+    platform_id INT,
+    login_date DATE,
+    minutes_used INT,
+    PRIMARY KEY (user_id, login_date)
+);
+
+-- Sample Data Insertion
+INSERT INTO UserSessions (user_id, platform_id, login_date, minutes_used) VALUES
+(101, 5, '2023-01-14', 45),
+(101, 5, '2023-03-22', 30),
+(102, 8, '2023-05-08', 12),
+(103, 4, '2023-01-15', 0),
+(103, 9, '2023-08-10', 28);
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Group the data by user_id</li>
+            <li>Find the earliest login_date for each user</li>
+            <li>Return the user_id and their first session date</li>
+        </ul>
+    </p>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using MIN function with GROUP BY</h4>
+        <pre>
+SELECT 
+    user_id, 
+    MIN(login_date) AS first_session
+FROM 
+    UserSessions
+GROUP BY 
+    user_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses the MIN aggregate function to find the earliest login date for each user group.</p>
+</div>
+
+        <h4>Solution 2: Using Window Functions</h4>
+        <pre>
+SELECT DISTINCT
+    user_id,
+    FIRST_VALUE(login_date) OVER (
+        PARTITION BY user_id 
+        ORDER BY login_date
+    ) AS first_session
+FROM 
+    UserSessions;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses the FIRST_VALUE window function to get the earliest date within each user partition.</p>
+</div>
+
+        <h4>Solution 3: Using a Common Table Expression (CTE) with ROW_NUMBER</h4>
+        <pre>
+WITH RankedSessions AS (
+    SELECT
+        user_id,
+        login_date,
+        ROW_NUMBER() OVER (
+            PARTITION BY user_id 
+            ORDER BY login_date
+        ) AS rn
+    FROM 
+        UserSessions
+)
+SELECT 
+    user_id, 
+    login_date AS first_session
+FROM 
+    RankedSessions
+WHERE 
+    rn = 1;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses ROW_NUMBER to assign a rank to each row within a user partition and then filters for only the first row.</p>
+</div>
+
+    </div> <!-- solutions section -->

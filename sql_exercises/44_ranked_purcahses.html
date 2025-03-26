@@ -1,0 +1,244 @@
+<h2>Finding First-Year Vehicle Purchases</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>Purchases</code></p>
+    <pre>
++---------------+-------+
+| Column Name   | Type  |
++---------------+-------+
+| purchase_id   | int   |
+| vehicle_id    | int   |
+| purchase_year | int   |
+| units         | int   |
+| cost          | int   |
++---------------+-------+
+    </pre>
+    
+    <p>(purchase_id, purchase_year) is the primary key (combination of columns with unique values) of this table.<br>
+    vehicle_id is a foreign key (reference column) to the Vehicle table.<br>
+    Each row of this table shows a purchase of the vehicle vehicle_id in a certain year.<br>
+    Note that the cost is per unit.</p>
+    
+    <p>Table: <code>Vehicle</code></p>
+    <pre>
++--------------+---------+
+| Column Name  | Type    |
++--------------+---------+
+| vehicle_id   | int     |
+| vehicle_name | varchar |
++--------------+---------+
+    </pre>
+    
+    <p>vehicle_id is the primary key (column with unique values) of this table.<br>
+    Each row of this table indicates the vehicle name of each vehicle.</p>
+    
+    <p>Write a solution to select the <strong>vehicle id</strong>, <strong>year</strong>, <strong>units</strong>, and <strong>cost</strong> for the <strong>first year</strong> of every vehicle purchased.<br>
+    Return the resulting table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>Purchases table:</p>
+    <pre>
++-------------+------------+---------------+-------+-------+
+| purchase_id | vehicle_id | purchase_year | units | cost  |
++-------------+------------+---------------+-------+-------+
+| 1           | 101        | 2020          | 5     | 25000 |
+| 2           | 101        | 2021          | 7     | 26000 |
+| 3           | 202        | 2019          | 3     | 45000 |
+| 4           | 202        | 2020          | 4     | 47000 |
+| 5           | 303        | 2022          | 2     | 32000 |
++-------------+------------+---------------+-------+-------+
+    </pre>
+    
+    <p>Vehicle table:</p>
+    <pre>
++------------+--------------+
+| vehicle_id | vehicle_name |
++------------+--------------+
+| 101        | Toyota       |
+| 202        | Tesla        |
+| 303        | Honda        |
+| 404        | Ford         |
++------------+--------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++------------+------------+-------+-------+
+| vehicle_id | first_year | units | cost  |
++------------+------------+-------+-------+
+| 101        | 2020       | 5     | 25000 |
+| 202        | 2019       | 3     | 45000 |
+| 303        | 2022       | 2     | 32000 |
++------------+------------+-------+-------+
+    </pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>Vehicle ID 101 (Toyota) was first purchased in 2020 with 5 units at a cost of 25000 per unit.</li>
+            <li>Vehicle ID 202 (Tesla) was first purchased in 2019 with 3 units at a cost of 45000 per unit.</li>
+            <li>Vehicle ID 303 (Honda) was first purchased in 2022 with 2 units at a cost of 32000 per unit.</li>
+            <li>Vehicle ID 404 (Ford) does not appear in the output as it was never purchased.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- create the purchases table
+create table purchases (
+    purchase_id int,
+    vehicle_id int,
+    purchase_year int,
+    units int,
+    cost int,
+    primary key (purchase_id, purchase_year)
+);
+
+-- create the vehicle table
+create table vehicle (
+    vehicle_id int primary key,
+    vehicle_name varchar
+);
+
+-- insert example data into purchases
+insert into purchases (purchase_id, vehicle_id, purchase_year, units, cost) values
+(1, 101, 2020, 5, 25000),
+(2, 101, 2021, 7, 26000),
+(3, 202, 2019, 3, 45000),
+(4, 202, 2020, 4, 47000),
+(5, 303, 2022, 2, 32000);
+
+-- insert example data into vehicle
+insert into vehicle (vehicle_id, vehicle_name) values
+(101, 'Toyota'),
+(202, 'Tesla'),
+(303, 'Honda'),
+(404, 'Ford');
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Find the earliest purchase year for each vehicle in the Purchases table</li>
+        <li>Select the vehicle_id, purchase_year (as first_year), units, and cost for those first purchases</li>
+        <li>Include only vehicles that have at least one purchase record</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use a subquery to find the minimum purchase year for each vehicle, then join this back to the Purchases table to get the complete information for those first-year purchases.</p>
+
+  <p>This approach requires finding the minimum purchase_year for each vehicle_id first, then joining this result back to the original table to get the complete row details.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use a window function to rank the purchases for each vehicle by year, then filter to keep only the first purchase (rank = 1) for each vehicle.</p>
+
+  <p>This approach leverages window functions to assign a rank to each purchase based on the purchase_year within each vehicle_id group, then filters to keep only the earliest purchase for each vehicle.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using Subquery to Find First Year</h4>
+    <pre>
+SELECT 
+    p.vehicle_id,
+    p.purchase_year AS first_year,
+    p.units,
+    p.cost
+FROM 
+    purchases p
+JOIN 
+    (SELECT 
+        vehicle_id, 
+        MIN(purchase_year) AS min_year
+     FROM 
+        purchases
+     GROUP BY 
+        vehicle_id) AS first_years
+ON 
+    p.vehicle_id = first_years.vehicle_id AND 
+    p.purchase_year = first_years.min_year;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution works by first creating a subquery that finds the minimum purchase year (first year) for each vehicle. Then we join this result back to the original Purchases table to get all the details (vehicle_id, purchase_year, units, cost) for those first-year purchases.</p>
+
+    <p>The JOIN condition ensures we match both the vehicle_id and the purchase_year (which must equal the minimum year for that vehicle).</p>
+</div>
+
+    <h4>Solution 2: Using Window Functions</h4>
+    <pre>
+WITH RankedPurchases AS (
+    SELECT 
+        vehicle_id,
+        purchase_year,
+        units,
+        cost,
+        RANK() OVER (PARTITION BY vehicle_id ORDER BY purchase_year) AS year_rank
+    FROM 
+        purchases
+)
+SELECT 
+    vehicle_id,
+    purchase_year AS first_year,
+    units,
+    cost
+FROM 
+    RankedPurchases
+WHERE 
+    year_rank = 1;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a Common Table Expression (CTE) with the RANK() window function to assign a rank to each purchase based on the purchase_year within each vehicle_id partition. The purchases are ordered by year in ascending order, so the earliest purchase gets rank 1.</p>
+
+    <p>Then, we simply select the records where the rank is 1, which gives us the first purchase year for each vehicle along with all the required details.</p>
+</div>
+
+    <h4>Solution 3: Using LEFT JOIN to Exclude Later Years</h4>
+    <pre>
+SELECT 
+    p1.vehicle_id,
+    p1.purchase_year AS first_year,
+    p1.units,
+    p1.cost
+FROM 
+    purchases p1
+LEFT JOIN 
+    purchases p2
+ON 
+    p1.vehicle_id = p2.vehicle_id AND 
+    p1.purchase_year > p2.purchase_year
+WHERE 
+    p2.purchase_id IS NULL;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a self-join approach. For each purchase (p1), we try to find an earlier purchase (p2) of the same vehicle. If no earlier purchase exists (p2.purchase_id IS NULL), then p1 must be the first purchase for that vehicle.</p>
+
+    <p>The LEFT JOIN with the condition p1.purchase_year > p2.purchase_year attempts to find any purchase of the same vehicle with an earlier year. The WHERE clause filters to keep only the rows where no such earlier purchase was found.</p>
+
+    <p>This approach is elegant and works without requiring aggregation functions, but it might be less efficient for very large datasets compared to the other solutions.</p>
+</div>
+
+</div> <!-- solutions section -->

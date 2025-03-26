@@ -1,0 +1,213 @@
+<h2>SQL Challenge: Alternate Employee Workstation Assignment</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Workstation</code></p>
+        <pre>
++----------------+---------+
+| Column Name    | Type    |
++----------------+---------+
+| station_id     | int     |
+| employee       | varchar |
++----------------+---------+
+        </pre>
+        
+        <p><code>station_id</code> is the primary key (unique value) column for this table.<br>
+        Each row of this table indicates the name of an employee and their assigned workstation ID.<br>
+        The station_id sequence always starts from 1 and increments continuously.</p>
+        
+        <p>Write a solution to swap the workstation IDs of every two consecutive employees. If the number of employees is odd, the station_id of the last employee should not be swapped.</p>
+        
+        <p>Return the result table ordered by <code>station_id</code> <strong>in ascending order</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Workstation table:</p>
+        <pre>
++----------------+---------+
+| station_id     | employee |
++----------------+---------+
+| 1              | Morgan   |
+| 2              | Taylor   |
+| 3              | Jordan   |
+| 4              | Riley    |
+| 5              | Casey    |
++----------------+---------+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++----------------+---------+
+| station_id     | employee |
++----------------+---------+
+| 1              | Taylor   |
+| 2              | Morgan   |
+| 3              | Riley    |
+| 4              | Jordan   |
+| 5              | Casey    |
++----------------+---------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>The employees at station_id 1 and 2 swap their workstations.</li>
+                <li>The employees at station_id 3 and 4 swap their workstations.</li>
+                <li>The employee at station_id 5 stays at their original workstation since there's no one to swap with (odd number of employees).</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the workstation table
+create table workstation (
+    station_id int primary key,
+    employee varchar
+);
+
+-- insert example data
+insert into workstation (station_id, employee) values
+(1, 'Morgan'),
+(2, 'Taylor'),
+(3, 'Jordan'),
+(4, 'Riley'),
+(5, 'Casey');
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Pair consecutive employees (1 with 2, 3 with 4, etc.)</li>
+            <li>Swap their workstation IDs within each pair</li>
+            <li>Leave the last employee unchanged if the total number is odd</li>
+            <li>Return the result sorted by station_id</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use a CASE statement with integer division and modulo operators to determine which employees should be swapped. For each station_id, we can calculate its pair and then perform the swap.</p>
+
+      <p>The key insight is that we can use integer division by 2 to group pairs of consecutive employees, and then use the modulo operator to determine which position in the pair each employee is.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use window functions to assign group numbers to pairs of consecutive employees, and then use a self-join to swap the employees within each group.</p>
+
+      <p>This approach involves creating a derived table where each row contains information about its pair, and then joining this table back to the original to perform the swap.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using CASE Statement with Integer Division</h4>
+        <pre>
+SELECT
+    w.station_id,
+    CASE 
+        WHEN w.station_id % 2 = 1 AND w.station_id < (SELECT MAX(station_id) FROM workstation) THEN 
+            (SELECT employee FROM workstation WHERE station_id = w.station_id + 1)
+        WHEN w.station_id % 2 = 0 THEN 
+            (SELECT employee FROM workstation WHERE station_id = w.station_id - 1)
+        ELSE 
+            w.employee  -- Last employee if odd number total
+    END AS employee
+FROM 
+    workstation w
+ORDER BY 
+    w.station_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a CASE statement to determine which employee should be assigned to each workstation:</p>
+    <ul>
+        <li>If the station_id is odd (station_id % 2 = 1) and not the last one, we assign the employee from the next station.</li>
+        <li>If the station_id is even (station_id % 2 = 0), we assign the employee from the previous station.</li>
+        <li>For the last employee in case of an odd total count, we keep their original assignment.</li>
+    </ul>
+    <p>The ORDER BY clause ensures the result is sorted by station_id in ascending order as required.</p>
+</div>
+
+        <h4>Solution 2: Using Window Functions</h4>
+        <pre>
+WITH grouped_employees AS (
+    SELECT
+        station_id,
+        employee,
+        CEIL(station_id / 2.0) AS group_id,
+        COUNT(*) OVER (PARTITION BY CEIL(station_id / 2.0)) AS group_size,
+        ROW_NUMBER() OVER (PARTITION BY CEIL(station_id / 2.0) ORDER BY station_id) AS position_in_group
+    FROM
+        workstation
+)
+
+SELECT
+    ge1.station_id,
+    CASE 
+        WHEN ge1.group_size = 1 THEN ge1.employee  -- Last employee if odd
+        WHEN ge1.position_in_group = 1 THEN ge2.employee  -- First in pair gets second's employee
+        ELSE ge1.employee  -- Something went wrong, fallback
+    END AS employee
+FROM
+    grouped_employees ge1
+LEFT JOIN
+    grouped_employees ge2 ON ge1.group_id = ge2.group_id AND ge1.position_in_group != ge2.position_in_group
+ORDER BY
+    ge1.station_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses window functions to group employees into pairs and then swaps them:</p>
+    <ul>
+        <li>We create a CTE that assigns a group_id to each pair of consecutive employees using CEIL(station_id / 2.0).</li>
+        <li>We calculate the size of each group (will be 2 for complete pairs, 1 for the last employee if odd).</li>
+        <li>We assign a position_in_group (1 or 2) to each employee within their group.</li>
+        <li>We then join this table to itself to match each employee with their swap partner.</li>
+        <li>For lone employees (group_size = 1), we keep their original assignment.</li>
+    </ul>
+    <p>The ORDER BY clause ensures the result is sorted by station_id as required.</p>
+</div>
+
+        <h4>Solution 3: Using MOD and LEAD/LAG Window Functions</h4>
+        <pre>
+SELECT
+    station_id,
+    CASE 
+        WHEN station_id % 2 = 1 AND LEAD(employee) OVER (ORDER BY station_id) IS NOT NULL THEN
+            LEAD(employee) OVER (ORDER BY station_id)
+        WHEN station_id % 2 = 0 THEN
+            LAG(employee) OVER (ORDER BY station_id)
+        ELSE
+            employee -- Last employee if odd number total
+    END AS employee
+FROM
+    workstation
+ORDER BY
+    station_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses the LEAD and LAG window functions to access the next and previous employees respectively:</p>
+    <ul>
+        <li>For odd station_ids, we use LEAD to get the employee from the next station_id (if it exists).</li>
+        <li>For even station_ids, we use LAG to get the employee from the previous station_id.</li>
+        <li>For the last employee in an odd-length sequence, we keep their original assignment.</li>
+    </ul>
+    <p>This approach is concise and elegant, as it avoids self-joins while still performing the required swapping operation. The LEAD/LAG functions make it easy to access adjacent rows without complex joins.</p>
+</div>
+
+    </div> <!-- solutions section -->

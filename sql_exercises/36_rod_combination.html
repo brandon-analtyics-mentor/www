@@ -1,0 +1,169 @@
+<h2>Rod Combination SQL Problem</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>RodPieces</code></p>
+        <pre>
++-------------+------+
+| Column Name | Type |
++-------------+------+
+| a           | int  |
+| b           | int  |
+| c           | int  |
++-------------+------+
+        </pre>
+        
+        <p>In SQL, (a, b, c) is the primary key column for this table.<br>
+        Each row of this table contains the lengths of three rod segments.</p>
+        
+        <p>You work in a manufacturing plant that creates structures using metal rods. You need to determine which combinations of three rod segments can form a valid structure. A valid structure requires that the sum of the lengths of any two rod segments must be greater than the length of the third segment.</p>
+        
+        <p>Write an SQL query to report for every three rod segments whether they can form a valid structure.</p>
+        
+        <p>Return the result table in <strong>any order</strong>.<br>
+        The result format is in the following example.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>RodPieces table:</p>
+        <pre>
++----+----+----+
+| a  | b  | c  |
++----+----+----+
+| 21 | 14 | 25 |
+| 12 | 18 | 9  |
+| 15 | 15 | 30 |
+| 7  | 6  | 12 |
++----+----+----+
+        </pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++----+----+----+----------+
+| a  | b  | c  | structure|
++----+----+----+----------+
+| 21 | 14 | 25 | Yes      |
+| 12 | 18 | 9  | Yes      |
+| 15 | 15 | 30 | No       |
+| 7  | 6  | 12 | Yes      |
++----+----+----+----------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>(21, 14, 25): 21 + 14 > 25, 21 + 25 > 14, and 14 + 25 > 21. So this is a valid structure.</li>
+                <li>(12, 18, 9): 12 + 18 > 9, 12 + 9 > 18, and 18 + 9 > 12. So this is a valid structure.</li>
+                <li>(15, 15, 30): 15 + 15 = 30, which does not satisfy the condition that the sum must be greater than the third length. So this is not a valid structure.</li>
+                <li>(7, 6, 12): This is not a valid structure because 7 + 6 = 13 which is greater than 12, but it doesn't meet the condition for the other sides.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the RodPieces table
+CREATE TABLE RodPieces (
+    a INT,
+    b INT,
+    c INT,
+    PRIMARY KEY (a, b, c)
+);
+
+-- Insert sample data
+INSERT INTO RodPieces (a, b, c) VALUES
+(21, 14, 25),
+(12, 18, 9),
+(15, 15, 30),
+(7, 6, 12);
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Check if the sum of any two sides is greater than the third side for each triple</li>
+            <li>Return 'Yes' if the condition is satisfied, otherwise 'No'</li>
+        </ul>
+    </p>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using CASE expression</h4>
+        <pre>
+SELECT 
+    a, 
+    b, 
+    c, 
+    CASE 
+        WHEN a + b > c AND a + c > b AND b + c > a THEN 'Yes'
+        ELSE 'No'
+    END AS structure
+FROM 
+    RodPieces;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a simple CASE expression to check if the sum of any two sides is greater than the third side. If all three conditions are true, then we return 'Yes', otherwise 'No'.</p>
+</div>
+
+        <h4>Solution 2: Using logical operators</h4>
+        <pre>
+SELECT 
+    a, 
+    b, 
+    c, 
+    CASE WHEN (a + b > c) AND (a + c > b) AND (b + c > a) 
+         THEN 'Yes' 
+         ELSE 'No' 
+    END AS structure
+FROM 
+    RodPieces
+ORDER BY 
+    structure DESC;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution is similar to Solution 1 but includes an ORDER BY clause to sort the results by the 'structure' column in descending order. This will group all the 'Yes' rows together, followed by all the 'No' rows.</p>
+</div>
+
+        <h4>Solution 3: Using WITH clause for readability</h4>
+        <pre>
+WITH ValidityCheck AS (
+    SELECT 
+        a, 
+        b, 
+        c,
+        (a + b > c) AND (a + c > b) AND (b + c > a) AS is_valid
+    FROM 
+        RodPieces
+)
+SELECT 
+    a, 
+    b, 
+    c,
+    CASE 
+        WHEN is_valid THEN 'Yes' 
+        ELSE 'No' 
+    END AS structure
+FROM 
+    ValidityCheck;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a Common Table Expression (CTE) to improve readability. We first calculate whether each row satisfies the triangle inequality in the CTE, then convert the boolean result to 'Yes' or 'No' in the main query.</p>
+
+    <p>Using a CTE in this way can make complex queries more maintainable and easier to understand, especially when multiple conditions or calculations are involved.</p>
+</div>
+
+    </div> <!-- solutions section -->

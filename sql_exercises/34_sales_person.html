@@ -1,0 +1,237 @@
+<h2>SQL Practice Question</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>
+        Write a solution to find the names of all employees who did not have any contracts related to the client with the name <strong>"AZURE"</strong>.
+        Return the result table in <strong>any order</strong>.
+    </p>
+    
+    <p>Tables Structure:</p>
+    
+    <p>Table: <code>Employee</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| employee_id   | int  |
+| full_name     | varchar |
+| base_pay      | int  |
+| bonus_percent | int  |
+| start_date    | date |
++---------------+------+
+    </pre>
+    
+    <p><code>employee_id</code> is the primary key for this table.<br>
+    Each row of this table indicates the name and ID of an employee alongside their base pay, bonus percentage, and start date.</p>
+    
+    <p>Table: <code>Client</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| client_id     | int  |
+| client_name   | varchar |
+| location      | varchar |
++---------------+------+
+    </pre>
+    
+    <p><code>client_id</code> is the primary key for this table.<br>
+    Each row of this table indicates the name and ID of a client and the location where the client is based.</p>
+    
+    <p>Table: <code>Contract</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| contract_id   | int  |
+| contract_date | date |
+| client_id     | int  |
+| employee_id   | int  |
+| value         | int  |
++---------------+------+
+    </pre>
+    
+    <p><code>contract_id</code> is the primary key for this table.<br>
+    <code>client_id</code> is a foreign key referencing <code>client_id</code> from the Client table.<br>
+    <code>employee_id</code> is a foreign key referencing <code>employee_id</code> from the Employee table.<br>
+    Each row of this table contains information about one contract. This includes the ID of the client, the ID of the employee, the date of the contract, and the contract value.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Expected Results:</strong><br>
+    Based on the sample data, the output should be:</p>
+    <pre>
+| full_name         |
+|-------------------|
+| David Rodriguez   |
+| Amanda Brown      |
+| Daniel Wilson     |
+    </pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <p>These employees don't have any contracts related to the client named 'AZURE'.</p>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- Create the Employee table
+CREATE TABLE Employee (
+    employee_id INT PRIMARY KEY,
+    full_name VARCHAR(100),
+    base_pay INT,
+    bonus_percent INT,
+    start_date DATE
+);
+
+-- Create the Client table
+CREATE TABLE Client (
+    client_id INT PRIMARY KEY,
+    client_name VARCHAR(100),
+    location VARCHAR(100)
+);
+
+-- Create the Contract table
+CREATE TABLE Contract (
+    contract_id INT PRIMARY KEY,
+    contract_date DATE,
+    client_id INT,
+    employee_id INT,
+    value INT,
+    FOREIGN KEY (client_id) REFERENCES Client(client_id),
+    FOREIGN KEY (employee_id) REFERENCES Employee(employee_id)
+);
+
+-- Insert data into Employee table
+INSERT INTO Employee (employee_id, full_name, base_pay, bonus_percent, start_date) VALUES
+(1, 'Sarah Johnson', 5000, 10, '2020-01-15'),
+(2, 'Michael Chen', 6000, 12, '2019-08-22'),
+(3, 'David Rodriguez', 5500, 8, '2021-03-10'),
+(4, 'Emily Taylor', 7000, 15, '2018-05-04'),
+(5, 'Robert Kim', 6500, 11, '2020-11-17'),
+(6, 'Jessica Martinez', 5800, 9, '2021-07-23'),
+(7, 'Daniel Wilson', 6200, 13, '2019-12-05'),
+(8, 'Amanda Brown', 5300, 7, '2022-02-19');
+
+-- Insert data into Client table
+INSERT INTO Client (client_id, client_name, location) VALUES
+(101, 'AZURE', 'Seattle'),
+(102, 'GreenTech', 'Portland'),
+(103, 'Quantum Systems', 'San Francisco'),
+(104, 'Nexus Corporation', 'Chicago'),
+(105, 'Apex Solutions', 'Boston');
+
+-- Insert data into Contract table
+INSERT INTO Contract (contract_id, contract_date, client_id, employee_id, value) VALUES
+(1001, '2023-01-10', 102, 1, 15000),
+(1002, '2023-01-25', 101, 4, 22000),
+(1003, '2023-02-05', 103, 2, 18000),
+(1004, '2023-02-18', 101, 6, 25000),
+(1005, '2023-03-02', 104, 3, 12000),
+(1006, '2023-03-15', 105, 1, 20000),
+(1007, '2023-04-05', 102, 5, 17000),
+(1008, '2023-04-22', 103, 7, 19000),
+(1009, '2023-05-08', 101, 2, 23000),
+(1010, '2023-05-20', 104, 5, 16000);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Find all employees who have NO contracts with the client named "AZURE"</li>
+        <li>Return just the full names of these employees in any order</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use the NOT IN operator to find employees whose IDs do not appear in the list of employee IDs that have contracts with the AZURE client.</p>
+
+  <p>This approach first finds all distinct employee IDs that have contracts with AZURE, then selects employees who are not in that list.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>Using the NOT EXISTS clause, we can check for each employee if there are any contracts linking them to the AZURE client.</p>
+
+  <p>This approach often performs well because the subquery can stop evaluating as soon as it finds a single matching row.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 3:</strong></p>
+  
+  <p>We can use a LEFT JOIN to connect employees with their AZURE contracts, then filter for NULL values, meaning no matching contracts were found.</p>
+
+  <p>This approach joins the Employee table with a subquery that finds all employee IDs with AZURE contracts, then filters for rows where no match exists.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using NOT IN</h4>
+    <pre>
+SELECT full_name
+FROM Employee
+WHERE employee_id NOT IN (
+    SELECT DISTINCT e.employee_id
+    FROM Employee e
+    JOIN Contract c ON e.employee_id = c.employee_id
+    JOIN Client cl ON c.client_id = cl.client_id
+    WHERE cl.client_name = 'AZURE'
+);
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution finds all employees who do not have their employee_id in the set of employee_ids that have contracts with the client named 'AZURE'. The subquery retrieves all distinct employee_ids that have contracts with 'AZURE', and the main query selects all employees whose IDs are not in that set.</p>
+</div>
+
+    <h4>Solution 2: Using NOT EXISTS</h4>
+    <pre>
+SELECT full_name
+FROM Employee e
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM Contract c
+    JOIN Client cl ON c.client_id = cl.client_id
+    WHERE c.employee_id = e.employee_id
+    AND cl.client_name = 'AZURE'
+);
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses the NOT EXISTS clause to find employees where there doesn't exist any contract with the client 'AZURE'. For each employee in the outer query, the subquery checks if there's any contract with 'AZURE'. If no such contract exists (NOT EXISTS evaluates to true), the employee is included in the result.</p>
+</div>
+
+    <h4>Solution 3: Using LEFT JOIN with NULL check</h4>
+    <pre>
+SELECT e.full_name
+FROM Employee e
+LEFT JOIN (
+    SELECT DISTINCT c.employee_id
+    FROM Contract c
+    JOIN Client cl ON c.client_id = cl.client_id
+    WHERE cl.client_name = 'AZURE'
+) azure_contracts ON e.employee_id = azure_contracts.employee_id
+WHERE azure_contracts.employee_id IS NULL;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a LEFT JOIN to connect each employee with a subquery that finds all employee_ids that have contracts with 'AZURE'. The LEFT JOIN ensures that all employees are included in the result, regardless of whether they match the subquery. Then, the WHERE clause filters for rows where azure_contracts.employee_id IS NULL, which means the employee doesn't have any contracts with 'AZURE'.</p>
+</div>
+
+</div> <!-- solutions section -->

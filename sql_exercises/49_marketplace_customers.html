@@ -1,0 +1,312 @@
+<h2>Online Marketplace Customer Analysis</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>You are analyzing data from an online marketplace that connects artists with customers who want to purchase artwork.</p>
+    
+    <p>The database contains three tables:</p>
+    
+    <p>Table: <code>Customers</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| customer_id   | int  |
+| signup_date   | date |
+| preferred_style| varchar |
++---------------+------+
+    </pre>
+    
+    <p><code>customer_id</code> is the primary key of this table.<br>
+    This table contains information about the customers who have registered on the online art marketplace.</p>
+    
+    <p>Table: <code>Purchases</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| purchase_id   | int  |
+| purchase_date | date |
+| artwork_id    | int  |
+| customer_id   | int  |
+| artist_id     | int  |
++---------------+------+
+    </pre>
+    
+    <p><code>purchase_id</code> is the primary key of this table.<br>
+    <code>artwork_id</code> is a foreign key referencing the Artworks table.<br>
+    <code>customer_id</code> and <code>artist_id</code> are foreign keys referencing the Customers table.<br>
+    This table records all purchases made on the platform.</p>
+    
+    <p>Table: <code>Artworks</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| artwork_id    | int  |
+| art_style     | varchar |
++---------------+------+
+    </pre>
+    
+    <p><code>artwork_id</code> is the primary key of this table.<br>
+    This table contains information about the artwork available on the platform.</p>
+    
+    <p>Write a SQL query to find, for each customer, their signup date and the number of purchases they made as a buyer in <strong>2023</strong>.</p>
+    
+    <p>Return the result table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>Customers table:</p>
+    <pre>
++-------------+------------+----------------+
+| customer_id | signup_date| preferred_style|
++-------------+------------+----------------+
+| 1           | 2022-01-15 | Abstract       |
+| 2           | 2023-02-10 | Impressionist  |
+| 3           | 2023-01-18 | Realism        |
+| 4           | 2022-05-20 | Surrealism     |
+| 5           | 2022-11-05 | Abstract       |
++-------------+------------+----------------+
+    </pre>
+    
+    <p>Purchases table:</p>
+    <pre>
++-------------+-------------+------------+-------------+------------+
+| purchase_id | purchase_date| artwork_id| customer_id | artist_id  |
++-------------+-------------+------------+-------------+------------+
+| 101         | 2023-03-15  | 201        | 1           | 3          |
+| 102         | 2023-04-10  | 205        | 1           | 5          |
+| 103         | 2023-05-20  | 208        | 2           | 4          |
+| 104         | 2023-07-12  | 203        | 3           | 2          |
+| 105         | 2022-12-15  | 202        | 3           | 1          |
+| 106         | 2023-08-05  | 204        | 4           | 1          |
+| 107         | 2022-10-25  | 206        | 4           | 3          |
+| 108         | 2023-05-30  | 207        | 5           | 2          |
+| 109         | 2022-11-18  | 202        | 5           | 1          |
+| 110         | 2023-09-22  | 209        | 1           | 4          |
++-------------+-------------+------------+-------------+------------+
+    </pre>
+    
+    <p>Artworks table:</p>
+    <pre>
++------------+---------------+
+| artwork_id | art_style     |
++------------+---------------+
+| 201        | Realism       |
+| 202        | Abstract      |
+| 203        | Impressionist |
+| 204        | Surrealism    |
+| 205        | Abstract      |
+| 206        | Realism       |
+| 207        | Abstract      |
+| 208        | Impressionist |
+| 209        | Surrealism    |
++------------+---------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++-------------+------------+-------------------+
+| customer_id | signup_date| purchase_count_2023|
++-------------+------------+-------------------+
+| 1           | 2022-01-15 | 3                 |
+| 2           | 2023-02-10 | 1                 |
+| 3           | 2023-01-18 | 1                 |
+| 4           | 2022-05-20 | 1                 |
+| 5           | 2022-11-05 | 1                 |
++-------------+------------+-------------------+
+    </pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>Customer 1 made 3 purchases in 2023 (purchase_ids 101, 102, and 110).</li>
+            <li>Customer 2 made 1 purchase in 2023 (purchase_id 103).</li>
+            <li>Customer 3 made 1 purchase in 2023 (purchase_id 104). The purchase with id 105 was made in 2022.</li>
+            <li>Customer 4 made 1 purchase in 2023 (purchase_id 106). The purchase with id 107 was made in 2022.</li>
+            <li>Customer 5 made 1 purchase in 2023 (purchase_id 108). The purchase with id 109 was made in 2022.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- Drop tables if they exist
+DROP TABLE IF EXISTS Purchases;
+DROP TABLE IF EXISTS Artworks;
+DROP TABLE IF EXISTS Customers;
+
+-- Create Customers table
+CREATE TABLE Customers (
+    customer_id INT PRIMARY KEY,
+    signup_date DATE,
+    preferred_style VARCHAR(50)
+);
+
+-- Create Artworks table
+CREATE TABLE Artworks (
+    artwork_id INT PRIMARY KEY,
+    art_style VARCHAR(50)
+);
+
+-- Create Purchases table
+CREATE TABLE Purchases (
+    purchase_id INT PRIMARY KEY,
+    purchase_date DATE,
+    artwork_id INT,
+    customer_id INT,
+    artist_id INT,
+    FOREIGN KEY (artwork_id) REFERENCES Artworks (artwork_id),
+    FOREIGN KEY (customer_id) REFERENCES Customers (customer_id),
+    FOREIGN KEY (artist_id) REFERENCES Customers (customer_id)
+);
+
+-- Insert data into Customers table
+INSERT INTO Customers (customer_id, signup_date, preferred_style) VALUES
+(1, '2022-01-15', 'Abstract'),
+(2, '2023-02-10', 'Impressionist'),
+(3, '2023-01-18', 'Realism'),
+(4, '2022-05-20', 'Surrealism'),
+(5, '2022-11-05', 'Abstract');
+
+-- Insert data into Artworks table
+INSERT INTO Artworks (artwork_id, art_style) VALUES
+(201, 'Realism'),
+(202, 'Abstract'),
+(203, 'Impressionist'),
+(204, 'Surrealism'),
+(205, 'Abstract'),
+(206, 'Realism'),
+(207, 'Abstract'),
+(208, 'Impressionist'),
+(209, 'Surrealism');
+
+-- Insert data into Purchases table
+INSERT INTO Purchases (purchase_id, purchase_date, artwork_id, customer_id, artist_id) VALUES
+(101, '2023-03-15', 201, 1, 3),
+(102, '2023-04-10', 205, 1, 5),
+(103, '2023-05-20', 208, 2, 4),
+(104, '2023-07-12', 203, 3, 2),
+(105, '2022-12-15', 202, 3, 1),
+(106, '2023-08-05', 204, 4, 1),
+(107, '2022-10-25', 206, 4, 3),
+(108, '2023-05-30', 207, 5, 2),
+(109, '2022-11-18', 202, 5, 1),
+(110, '2023-09-22', 209, 1, 4);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Get each customer and their signup date from the Customers table</li>
+        <li>Count the number of purchases each customer made in 2023</li>
+        <li>Return the customer_id, signup_date, and the count of 2023 purchases</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use a LEFT JOIN to connect the Customers table with the Purchases table, filtering for purchases made in 2023. Then, we GROUP BY customer to count the number of purchases each customer made in 2023.</p>
+
+  <p>The LEFT JOIN ensures that all customers are included in the result, even if they made no purchases in 2023.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use a Common Table Expression (CTE) to first calculate the number of purchases each customer made in 2023, then join this result with the Customers table.</p>
+
+  <p>This approach separates the logic of finding 2023 purchases from joining with customer information, which can make the query more readable and easier to maintain.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using LEFT JOIN with Filtering</h4>
+    <pre>
+SELECT 
+    c.customer_id,
+    c.signup_date,
+    COUNT(p.purchase_id) AS purchase_count_2023
+FROM 
+    Customers c
+LEFT JOIN 
+    Purchases p ON c.customer_id = p.customer_id
+    AND EXTRACT(YEAR FROM p.purchase_date) = 2023
+GROUP BY 
+    c.customer_id, c.signup_date
+ORDER BY 
+    c.customer_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a LEFT JOIN to connect the Customers table with the Purchases table. The join condition includes a filter for purchases made in 2023, which means only 2023 purchases will be counted.</p>
+
+    <p>The GROUP BY clause groups the results by customer_id and signup_date, and the COUNT function counts the number of purchases for each customer. Because we're using a LEFT JOIN, customers who made no purchases in 2023 would still appear in the result with a count of 0.</p>
+</div>
+
+    <h4>Solution 2: Using Common Table Expression (CTE)</h4>
+    <pre>
+WITH purchases_2023 AS (
+    SELECT 
+        customer_id,
+        COUNT(purchase_id) AS purchase_count
+    FROM 
+        Purchases
+    WHERE 
+        EXTRACT(YEAR FROM purchase_date) = 2023
+    GROUP BY 
+        customer_id
+)
+
+SELECT 
+    c.customer_id,
+    c.signup_date,
+    COALESCE(p.purchase_count, 0) AS purchase_count_2023
+FROM 
+    Customers c
+LEFT JOIN 
+    purchases_2023 p ON c.customer_id = p.customer_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a Common Table Expression (CTE) named purchases_2023 to first calculate the number of purchases each customer made in 2023. The CTE filters for purchases made in 2023 and groups by customer_id to count the purchases.</p>
+
+    <p>Then, the main query joins the Customers table with this CTE using a LEFT JOIN to ensure all customers are included. The COALESCE function is used to replace NULL values with 0 for customers who made no purchases in 2023.</p>
+</div>
+
+    <h4>Solution 3: Using Correlated Subquery</h4>
+    <pre>
+SELECT 
+    c.customer_id,
+    c.signup_date,
+    (
+        SELECT COUNT(*)
+        FROM Purchases p
+        WHERE p.customer_id = c.customer_id
+        AND EXTRACT(YEAR FROM p.purchase_date) = 2023
+    ) AS purchase_count_2023
+FROM 
+    Customers c;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a correlated subquery to calculate the number of purchases each customer made in 2023. For each row in the Customers table, the subquery counts the number of purchases where the customer_id matches and the purchase was made in 2023.</p>
+
+    <p>This approach is straightforward and easy to understand, but it might be less efficient for large datasets compared to the other solutions because the subquery is executed for each row in the Customers table.</p>
+</div>
+
+</div> <!-- solutions section -->

@@ -1,0 +1,202 @@
+<h2>Frequent Musician-Producer Collaborations</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>MusicianProducer</code></p>
+    <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| musician_id   | int     |
+| producer_id   | int     |
+| project_date  | int     |
++---------------+---------+
+    </pre>
+    
+    <p><code>project_date</code> is the primary key (column with unique values) for this table.<br>
+    Each row of this table contains information about a musician and producer who collaborated on a project on a specific date.</p>
+    
+    <p>Write a solution to find all the pairs <code>(musician_id, producer_id)</code> where the musician has collaborated with the producer at least three times.</p>
+    
+    <p>Return the result table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>MusicianProducer table:</p>
+    <pre>
++-------------+-------------+-------------+
+| musician_id | producer_id | project_date|
++-------------+-------------+-------------+
+| 101         | 201         | 20220501    |
+| 101         | 201         | 20220615    |
+| 101         | 201         | 20220830    |
+| 101         | 202         | 20220910    |
+| 101         | 202         | 20221105    |
+| 102         | 201         | 20220712    |
+| 102         | 201         | 20220905    |
+| 103         | 203         | 20220601    |
+| 103         | 203         | 20220702    |
+| 103         | 203         | 20220825    |
++-------------+-------------+-------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++-------------+-------------+
+| musician_id | producer_id |
++-------------+-------------+
+| 101         | 201         |
+| 103         | 203         |
++-------------+-------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>The pair (101, 201) collaborated on three projects with dates 20220501, 20220615, and 20220830.</li>
+            <li>The pair (101, 202) only collaborated on two projects, so they are not included.</li>
+            <li>The pair (102, 201) only collaborated on two projects, so they are not included.</li>
+            <li>The pair (103, 203) collaborated on three projects with dates 20220601, 20220702, and 20220825.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- create the MusicianProducer table
+create table MusicianProducer (
+    musician_id int,
+    producer_id int,
+    project_date int,
+    primary key (project_date)
+);
+
+-- insert example data
+insert into MusicianProducer (musician_id, producer_id, project_date) values
+(101, 201, 20220501),
+(101, 201, 20220615),
+(101, 201, 20220830),
+(101, 202, 20220910),
+(101, 202, 20221105),
+(102, 201, 20220712),
+(102, 201, 20220905),
+(103, 203, 20220601),
+(103, 203, 20220702),
+(103, 203, 20220825);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Count the number of collaborations between each musician-producer pair</li>
+        <li>Filter to find pairs where the count is at least 3</li>
+        <li>Return the musician_id and producer_id for these pairs</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use GROUP BY to count collaborations between each musician-producer pair, then use the HAVING clause to filter for pairs with at least 3 collaborations.</p>
+
+  <p>This approach is straightforward and efficient, using aggregation to solve the problem in a single query.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use a subquery or CTE to first count the number of collaborations for each pair, then select only those pairs where the count is at least 3.</p>
+
+  <p>This approach separates the counting and filtering steps, which might be clearer for complex queries or when additional processing is needed.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using GROUP BY with HAVING</h4>
+    <pre>
+SELECT 
+    musician_id,
+    producer_id
+FROM 
+    MusicianProducer
+GROUP BY 
+    musician_id, producer_id
+HAVING 
+    COUNT(*) >= 3;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution groups the data by musician_id and producer_id, effectively creating groups for each unique musician-producer pair. The COUNT(*) function counts the number of rows in each group, which represents the number of collaborations for that pair.</p>
+
+    <p>The HAVING clause filters the groups, keeping only those where the count is at least 3. This gives us the musician-producer pairs that have collaborated at least three times.</p>
+</div>
+
+    <h4>Solution 2: Using a Common Table Expression (CTE)</h4>
+    <pre>
+WITH CollaborationCounts AS (
+    SELECT
+        musician_id,
+        producer_id,
+        COUNT(*) AS collab_count
+    FROM
+        MusicianProducer
+    GROUP BY
+        musician_id, producer_id
+)
+
+SELECT
+    musician_id,
+    producer_id
+FROM
+    CollaborationCounts
+WHERE
+    collab_count >= 3;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a Common Table Expression (CTE) named CollaborationCounts to first calculate the number of collaborations for each musician-producer pair.</p>
+
+    <p>In the CTE, we group by musician_id and producer_id and count the number of rows in each group using COUNT(*). Then, in the main query, we select only those pairs where the collaboration count is at least 3.</p>
+
+    <p>This approach separates the counting logic from the filtering, making the query potentially more readable and maintainable, especially for more complex cases.</p>
+</div>
+
+    <h4>Solution 3: Using a Subquery</h4>
+    <pre>
+SELECT
+    mp.musician_id,
+    mp.producer_id
+FROM (
+    SELECT 
+        musician_id,
+        producer_id,
+        COUNT(*) AS collab_count
+    FROM 
+        MusicianProducer
+    GROUP BY 
+        musician_id, producer_id
+) mp
+WHERE 
+    mp.collab_count >= 3;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    Similar to Solution 2, this approach uses a subquery instead of a CTE to first count the number of collaborations for each musician-producer pair.</p>
+
+    <p>The subquery groups by musician_id and producer_id, counting the rows in each group. The outer query then filters these results to include only pairs with at least 3 collaborations.</p>
+
+    <p>This solution achieves the same result as the previous ones but uses a different SQL construct. The choice between a CTE and a subquery often comes down to personal preference or specific database optimization considerations.</p>
+</div>
+
+</div> <!-- solutions section -->

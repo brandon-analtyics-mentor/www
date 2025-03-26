@@ -1,0 +1,236 @@
+<h2>Property Investment Analysis</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>RealEstate</code></p>
+    <pre>
++-------------+-------+
+| Column Name | Type  |
++-------------+-------+
+| property_id | int   |
+| value_2022  | float |
+| value_2023  | float |
+| latitude    | float |
+| longitude   | float |
++-------------+-------+
+    </pre>
+    
+    <p><code>property_id</code> is the primary key (column with unique values) for this table.<br>
+    Each row of this table contains information about one property investment where:</p>
+    
+    <p>Write a solution to report the sum of all property values in 2023 (<code>value_2023</code>), for all properties that:</p>
+    <ul>
+        <li>have the same <code>value_2022</code> as one or more other properties, and</li>
+        <li>are not located in the same location as any other property (i.e., the (<code>latitude, longitude</code>) attribute pairs must be unique).</li>
+    </ul>
+    
+    <p>Round <code>value_2023</code> to <strong>two decimal places</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>RealEstate table:</p>
+    <pre>
++-------------+------------+------------+----------+-----------+
+| property_id | value_2022 | value_2023 | latitude | longitude |
++-------------+------------+------------+----------+-----------+
+| 101         | 500000     | 520000     | 34.05    | -118.25   |
+| 102         | 750000     | 800000     | 40.71    | -74.01    |
+| 103         | 500000     | 540000     | 40.71    | -74.01    |
+| 104         | 500000     | 505000     | 37.77    | -122.42   |
+| 105         | 600000     | 590000     | 47.61    | -122.33   |
++-------------+------------+------------+----------+-----------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++------------+
+| value_2023 |
++------------+
+| 1025000.00 |
++------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li><strong>Property 101:</strong> Has <code>value_2022</code> of 500000, which is the same as properties 103 and 104. Its location (34.05, -118.25) is unique. Meets both criteria.</li>
+            <li><strong>Property 102:</strong> Has <code>value_2022</code> of 750000, which is not the same as any other property. Fails the first criterion.</li>
+            <li><strong>Property 103:</strong> Has <code>value_2022</code> of 500000, which is the same as properties 101 and 104. But its location (40.71, -74.01) is the same as property 102. Fails the second criterion.</li>
+            <li><strong>Property 104:</strong> Has <code>value_2022</code> of 500000, which is the same as properties 101 and 103. Its location (37.77, -122.42) is unique. Meets both criteria.</li>
+            <li><strong>Property 105:</strong> Has <code>value_2022</code> of 600000, which is not the same as any other property. Fails the first criterion.</li>
+        </ul>
+        <p>Therefore, the result is the sum of <code>value_2023</code> for properties 101 and 104: 520000 + 505000 = 1025000.00</p>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- create the realestate table
+create table realestate (
+    property_id int primary key,
+    value_2022 float,
+    value_2023 float,
+    latitude float,
+    longitude float
+);
+
+-- insert example data
+insert into realestate (property_id, value_2022, value_2023, latitude, longitude) values
+(101, 500000, 520000, 34.05, -118.25),
+(102, 750000, 800000, 40.71, -74.01),
+(103, 500000, 540000, 40.71, -74.01),
+(104, 500000, 505000, 37.77, -122.42),
+(105, 600000, 590000, 47.61, -122.33);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Find properties with the same value_2022 as other properties</li>
+        <li>Find properties with unique location coordinates (latitude, longitude)</li>
+        <li>Calculate the sum of value_2023 for properties that meet both criteria</li>
+        <li>Round the result to two decimal places</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use a subquery to identify properties that have the same value_2022 as at least one other property. Then, we need to identify properties with unique locations by grouping on latitude and longitude and filtering for groups with count = 1.</p>
+
+  <p>Finally, we'll join these results to get properties that satisfy both conditions and sum their value_2023.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use Common Table Expressions (CTEs) to separately identify properties that meet each criterion, then join them to find properties meeting both conditions.</p>
+
+  <p>This approach improves readability by breaking down the problem into separate logical steps.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using Subqueries</h4>
+    <pre>
+SELECT
+    ROUND(SUM(value_2023), 2) as value_2023
+FROM
+    RealEstate r1
+WHERE
+    -- Properties with the same value_2022 as other properties
+    EXISTS (
+        SELECT 1
+        FROM RealEstate r2
+        WHERE r1.property_id != r2.property_id
+        AND r1.value_2022 = r2.value_2022
+    )
+    -- Properties with unique locations
+    AND NOT EXISTS (
+        SELECT 1
+        FROM RealEstate r3
+        WHERE r1.property_id != r3.property_id
+        AND r1.latitude = r3.latitude
+        AND r1.longitude = r3.longitude
+    );
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses nested subqueries with EXISTS clauses to find properties that meet both criteria:</p>
+    
+    <p>The first EXISTS subquery checks if there's at least one other property with the same value_2022, satisfying the first condition.</p>
+    
+    <p>The second EXISTS subquery (with NOT) checks if there are NO other properties with the same location coordinates, satisfying the second condition.</p>
+    
+    <p>We then take the sum of value_2023 for all properties that meet both conditions and round to two decimal places.</p>
+</div>
+
+    <h4>Solution 2: Using Common Table Expressions (CTEs)</h4>
+    <pre>
+WITH SameValueProperties AS (
+    SELECT property_id
+    FROM RealEstate r1
+    WHERE EXISTS (
+        SELECT 1
+        FROM RealEstate r2
+        WHERE r1.property_id != r2.property_id
+        AND r1.value_2022 = r2.value_2022
+    )
+),
+UniqueLocationProperties AS (
+    SELECT property_id
+    FROM RealEstate r1
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM RealEstate r2
+        WHERE r1.property_id != r2.property_id
+        AND r1.latitude = r2.latitude
+        AND r1.longitude = r2.longitude
+    )
+)
+
+SELECT ROUND(SUM(r.value_2023), 2) as value_2023
+FROM RealEstate r
+JOIN SameValueProperties sv ON r.property_id = sv.property_id
+JOIN UniqueLocationProperties ul ON r.property_id = ul.property_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses two Common Table Expressions (CTEs) to clearly separate the two criteria:</p>
+    
+    <p>The first CTE, SameValueProperties, identifies all properties that have the same value_2022 as at least one other property.</p>
+    
+    <p>The second CTE, UniqueLocationProperties, identifies all properties that have a unique latitude-longitude combination.</p>
+    
+    <p>We then join the main table with both CTEs to find properties that appear in both lists, and sum their value_2023 values, rounding to two decimal places.</p>
+</div>
+
+    <h4>Solution 3: Using GROUP BY and Aggregation</h4>
+    <pre>
+WITH SameValue AS (
+    SELECT value_2022
+    FROM RealEstate
+    GROUP BY value_2022
+    HAVING COUNT(*) > 1
+),
+DuplicateLocations AS (
+    SELECT latitude, longitude
+    FROM RealEstate
+    GROUP BY latitude, longitude
+    HAVING COUNT(*) > 1
+)
+
+SELECT ROUND(SUM(r.value_2023), 2) as value_2023
+FROM RealEstate r
+JOIN SameValue sv ON r.value_2022 = sv.value_2022
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM DuplicateLocations dl
+    WHERE r.latitude = dl.latitude AND r.longitude = dl.longitude
+);
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses a different approach with GROUP BY aggregations:</p>
+    
+    <p>The first CTE identifies all value_2022 values that appear more than once, indicating properties that have the same value_2022 as other properties.</p>
+    
+    <p>The second CTE identifies all location coordinates that appear more than once, indicating non-unique locations.</p>
+    
+    <p>We then join the main table with the SameValue CTE to get properties with duplicate values, and filter out properties whose locations appear in the DuplicateLocations CTE.</p>
+    
+    <p>Finally, we sum the remaining properties' value_2023 and round to two decimal places.</p>
+</div>
+
+</div> <!-- solutions section -->

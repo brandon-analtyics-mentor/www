@@ -1,0 +1,299 @@
+<h2>Restaurant Delivery Success Rate</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>You have two tables: <code>Orders</code> and <code>Users</code>.</p>
+        
+        <p>Table: <code>Orders</code></p>
+        <pre>
++---------+-------------+------------+---------------+------------------------+------------+
+| order_id| customer_id | courier_id | restaurant_id | status                 | order_date |
++---------+-------------+------------+---------------+------------------------+------------+
+        </pre>
+        
+        <p><code>order_id</code> is the primary key (column with unique values) for this table.<br>
+        The table holds all food delivery orders. Each order has a unique <code>order_id</code>, while <code>customer_id</code> and <code>courier_id</code> are foreign keys to the <code>user_id</code> in the <code>Users</code> table.<br>
+        Status is an ENUM type of ('delivered', 'cancelled_by_courier', 'cancelled_by_customer').</p>
+        
+        <p>Table: <code>Users</code></p>
+        <pre>
++---------+-----------+------------+
+| user_id | suspended | role       |
++---------+-----------+------------+
+        </pre>
+        
+        <p><code>user_id</code> is the primary key (column with unique values) for this table.<br>
+        The table holds all users. Each user has a unique <code>user_id</code>, and role is an ENUM type of ('customer', 'courier', 'restaurant').<br>
+        <code>suspended</code> is an ENUM type of ('Yes', 'No').</p>
+        
+        <p>The success rate is computed by dividing the number of delivered orders with non-suspended users by the total number of orders with non-suspended users (both customer and courier must not be suspended) on that day.</p>
+        
+        <p>Write a solution to find the success rate of orders with non-suspended users each day between "2022-06-01" and "2022-06-03" with at least one order. Round Success Rate to two decimal points.</p>
+        
+        <p>Return the result table in any order.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Orders table:</p>
+        <pre>
++---------+-------------+------------+---------------+------------------------+------------+
+| order_id| customer_id | courier_id | restaurant_id | status                 | order_date |
++---------+-------------+------------+---------------+------------------------+------------+
+| 1       | 1           | 10         | 101           | delivered              | 2022-06-01 |
+| 2       | 2           | 11         | 103           | cancelled_by_courier   | 2022-06-01 |
+| 3       | 3           | 12         | 102           | delivered              | 2022-06-01 |
+| 4       | 4           | 13         | 101           | cancelled_by_customer  | 2022-06-01 |
+| 5       | 1           | 10         | 102           | delivered              | 2022-06-02 |
+| 6       | 2           | 11         | 103           | delivered              | 2022-06-02 |
+| 7       | 3           | 12         | 101           | delivered              | 2022-06-02 |
+| 8       | 2           | 12         | 102           | delivered              | 2022-06-03 |
+| 9       | 3           | 10         | 103           | delivered              | 2022-06-03 |
+| 10      | 4           | 13         | 101           | cancelled_by_courier   | 2022-06-03 |
++---------+-------------+------------+---------------+------------------------+------------+
+        </pre>
+        
+        <p>Users table:</p>
+        <pre>
++---------+-----------+------------+
+| user_id | suspended | role       |
++---------+-----------+------------+
+| 1       | No        | customer   |
+| 2       | Yes       | customer   |
+| 3       | No        | customer   |
+| 4       | No        | customer   |
+| 10      | No        | courier    |
+| 11      | No        | courier    |
+| 12      | No        | courier    |
+| 13      | No        | courier    |
+| 101     | No        | restaurant |
+| 102     | No        | restaurant |
+| 103     | No        | restaurant |
++---------+-----------+------------+</pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++------------+-------------+
+| Day        | Success Rate|
++------------+-------------+
+| 2022-06-01 | 0.67        |
+| 2022-06-02 | 1.00        |
+| 2022-06-03 | 0.50        |
++------------+-------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            
+            <p><strong>On 2022-06-01:</strong></p>
+            <ul>
+                <li>There were 4 orders in total, 2 of which were delivered successfully.</li>
+                <li>However, the order with ID=2 was made by a suspended customer (user_id=2), so it is ignored in the calculation.</li>
+                <li>Hence there are 3 non-suspended orders in total, 2 of which were delivered successfully.</li>
+                <li>The Success Rate is (2 / 3) = 0.67</li>
+            </ul>
+            
+            <p><strong>On 2022-06-02:</strong></p>
+            <ul>
+                <li>There were 3 orders in total, 3 of which were delivered successfully.</li>
+                <li>The order with ID=6 was made by a suspended customer, so it is ignored.</li>
+                <li>Hence there are 2 non-suspended orders in total, 2 of which were delivered successfully.</li>
+                <li>The Success Rate is (2 / 2) = 1.00</li>
+            </ul>
+            
+            <p><strong>On 2022-06-03:</strong></p>
+            <ul>
+                <li>There were 3 orders in total, 2 of which were delivered successfully.</li>
+                <li>The order with ID=8 was made by a suspended customer, so it is ignored.</li>
+                <li>Hence there are 2 non-suspended orders in total, 1 of which was delivered successfully.</li>
+                <li>The Success Rate is (1 / 2) = 0.50</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- Create the Orders table
+CREATE TABLE Orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    courier_id INT,
+    restaurant_id INT,
+    status VARCHAR(30),
+    order_date VARCHAR(10)
+);
+
+-- Create the Users table
+CREATE TABLE Users (
+    user_id INT PRIMARY KEY,
+    suspended VARCHAR(3),
+    role VARCHAR(10)
+);
+
+-- Insert data into Orders table
+INSERT INTO Orders VALUES
+(1, 1, 10, 101, 'delivered', '2022-06-01'),
+(2, 2, 11, 103, 'cancelled_by_courier', '2022-06-01'),
+(3, 3, 12, 102, 'delivered', '2022-06-01'),
+(4, 4, 13, 101, 'cancelled_by_customer', '2022-06-01'),
+(5, 1, 10, 102, 'delivered', '2022-06-02'),
+(6, 2, 11, 103, 'delivered', '2022-06-02'),
+(7, 3, 12, 101, 'delivered', '2022-06-02'),
+(8, 2, 12, 102, 'delivered', '2022-06-03'),
+(9, 3, 10, 103, 'delivered', '2022-06-03'),
+(10, 4, 13, 101, 'cancelled_by_courier', '2022-06-03');
+
+-- Insert data into Users table
+INSERT INTO Users VALUES
+(1, 'No', 'customer'),
+(2, 'Yes', 'customer'),
+(3, 'No', 'customer'),
+(4, 'No', 'customer'),
+(10, 'No', 'courier'),
+(11, 'No', 'courier'),
+(12, 'No', 'courier'),
+(13, 'No', 'courier'),
+(101, 'No', 'restaurant'),
+(102, 'No', 'restaurant'),
+(103, 'No', 'restaurant');
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Filter orders to include only those where both customer and courier are not suspended</li>
+            <li>Group the filtered orders by date</li>
+            <li>Calculate the success rate for each date by dividing the count of delivered orders by the total count of orders</li>
+            <li>Round the result to two decimal places</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use JOIN operations to combine the Orders table with the Users table twice - once for customers and once for couriers. This will allow us to filter out orders where either the customer or courier is suspended.</p>
+
+      <p>Then, we'll group the remaining orders by date and calculate the success rate for each date by dividing the count of delivered orders by the total count of orders.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use a Common Table Expression (CTE) to first filter out orders with suspended users, then calculate the success rate for each date.</p>
+
+      <p>This approach simplifies the logic by breaking it down into smaller steps, making it easier to understand and maintain.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using JOIN Operations</h4>
+        <pre>
+SELECT 
+    o.order_date AS Day,
+    ROUND(
+        SUM(CASE WHEN o.status = 'delivered' THEN 1 ELSE 0 END)::DECIMAL / 
+        COUNT(*)::DECIMAL,
+        2
+    ) AS "Success Rate"
+FROM 
+    Orders o
+    JOIN Users cust ON o.customer_id = cust.user_id AND cust.suspended = 'No'
+    JOIN Users cour ON o.courier_id = cour.user_id AND cour.suspended = 'No'
+WHERE 
+    o.order_date BETWEEN '2022-06-01' AND '2022-06-03'
+GROUP BY 
+    o.order_date
+ORDER BY 
+    o.order_date;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses JOIN operations to filter out orders where either the customer or courier is suspended. We join the Orders table with the Users table twice - once for customers and once for couriers.</p>
+
+    <p>We then group the remaining orders by date and calculate the success rate for each date by dividing the count of delivered orders by the total count of orders. The ROUND function is used to round the result to two decimal places.</p>
+</div>
+
+        <h4>Solution 2: Using a Common Table Expression (CTE)</h4>
+        <pre>
+WITH ValidOrders AS (
+    SELECT
+        o.order_id,
+        o.order_date,
+        o.status
+    FROM
+        Orders o
+        JOIN Users cust ON o.customer_id = cust.user_id
+        JOIN Users cour ON o.courier_id = cour.user_id
+    WHERE
+        cust.suspended = 'No' AND
+        cour.suspended = 'No' AND
+        o.order_date BETWEEN '2022-06-01' AND '2022-06-03'
+)
+
+SELECT
+    order_date AS Day,
+    ROUND(
+        SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END)::DECIMAL /
+        COUNT(*)::DECIMAL,
+        2
+    ) AS "Success Rate"
+FROM
+    ValidOrders
+GROUP BY
+    order_date
+ORDER BY
+    order_date;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses a Common Table Expression (CTE) named ValidOrders to first filter out orders where either the customer or courier is suspended.</p>
+
+    <p>We then use this CTE to calculate the success rate for each date by dividing the count of delivered orders by the total count of orders. The ROUND function is used to round the result to two decimal places.</p>
+</div>
+
+        <h4>Solution 3: Using Subqueries</h4>
+        <pre>
+SELECT
+    order_date AS Day,
+    ROUND(
+        SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END)::DECIMAL /
+        COUNT(*)::DECIMAL,
+        2
+    ) AS "Success Rate"
+FROM (
+    SELECT
+        o.order_id,
+        o.order_date,
+        o.status
+    FROM
+        Orders o
+    WHERE
+        o.order_date BETWEEN '2022-06-01' AND '2022-06-03' AND
+        o.customer_id IN (SELECT user_id FROM Users WHERE suspended = 'No') AND
+        o.courier_id IN (SELECT user_id FROM Users WHERE suspended = 'No')
+) AS valid_orders
+GROUP BY
+    order_date
+ORDER BY
+    order_date;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses subqueries to filter out orders where either the customer or courier is suspended. We use IN operators with subqueries to check if the customer_id and courier_id are in the list of non-suspended users.</p>
+
+    <p>We then group the remaining orders by date and calculate the success rate for each date by dividing the count of delivered orders by the total count of orders. The ROUND function is used to round the result to two decimal places.</p>
+
+    <p>This approach might be less efficient than the JOIN approach for large datasets, but it can be easier to understand for those more familiar with subqueries than joins.</p>
+</div>
+
+    </div> <!-- solutions section -->

@@ -1,0 +1,204 @@
+<h2>Low Commission Retailers</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>
+        Given two tables: <code>Retailer</code> and <code>Commission</code>, write a SQL query to find all retailers with a commission less than 1500 or with no commission.
+    </p>
+    
+    <p>Table: <code>Retailer</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| retailId      | int  |
+| retailName    | varchar |
+| manager       | int  |
+| revenue       | int  |
++---------------+------+
+    </pre>
+    
+    <p><code>retailId</code> is the primary key, unique identifier for each retailer.</p>
+    
+    <p>Table: <code>Commission</code></p>
+    <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| retailId      | int  |
+| commission    | int  |
++---------------+------+
+    </pre>
+    
+    <p><code>retailId</code> is the primary key, foreign key to Retailer table.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>Retailer table:</p>
+    <pre>
++----------+------------+---------+---------+
+| retailId | retailName | manager | revenue |
++----------+------------+---------+---------+
+| 5        | Sophia     | null    | 8000    |
+| 2        | Miguel     | 5       | 3000    |
+| 3        | Aisha      | 5       | 5000    |
+| 7        | Lucas      | 5       | 7500    |
++----------+------------+---------+---------+
+    </pre>
+    
+    <p>Commission table:</p>
+    <pre>
++----------+------------+
+| retailId | commission |
++----------+------------+
+| 3        | 900        |
+| 7        | 2500       |
++----------+------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++------------+------------+
+| retailName | commission |
++------------+------------+
+| Sophia     | null       |
+| Miguel     | null       |
+| Aisha      | 900        |
++------------+------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>Sophia has no commission record, so her commission is null.</li>
+            <li>Miguel has no commission record, so his commission is null.</li>
+            <li>Aisha has a commission of 900, which is less than 1500.</li>
+            <li>Lucas has a commission of 2500, which is greater than 1500, so he is not included.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- Create Retailer table
+CREATE TABLE Retailer (
+    retailId INT PRIMARY KEY,
+    retailName VARCHAR(100),
+    manager INT,
+    revenue INT
+);
+
+-- Create Commission table
+CREATE TABLE Commission (
+    retailId INT PRIMARY KEY,
+    commission INT,
+    FOREIGN KEY (retailId) REFERENCES Retailer(retailId)
+);
+
+-- Insert data into Retailer table
+INSERT INTO Retailer (retailId, retailName, manager, revenue)
+VALUES
+    (5, 'Sophia', NULL, 8000),
+    (2, 'Miguel', 5, 3000),
+    (3, 'Aisha', 5, 5000),
+    (7, 'Lucas', 5, 7500);
+
+-- Insert data into Commission table
+INSERT INTO Commission (retailId, commission)
+VALUES
+    (3, 900),
+    (7, 2500);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Find retailers with commission less than 1500</li>
+        <li>Find retailers with no commission</li>
+        <li>Combine these results</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use a LEFT JOIN to include all retailers, even those without a commission entry. The WHERE clause filters for commissions less than 1500 or NULL.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use a subquery with NOT EXISTS to filter out retailers with commissions greater than or equal to 1500.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 3:</strong></p>
+  
+  <p>We can use UNION to combine two separate queries: one for retailers with commissions less than 1500, and another for retailers with no commission records.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using LEFT JOIN</h4>
+    <pre>
+SELECT r.retailName, c.commission
+FROM Retailer r
+LEFT JOIN Commission c ON r.retailId = c.retailId
+WHERE c.commission < 1500 OR c.commission IS NULL;
+</pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 1:</strong></p>
+        <p>
+        This solution uses a LEFT JOIN to include all retailers, even those without a commission entry.
+        The WHERE clause filters for commissions less than 1500 or NULL.</p>
+    </div>
+
+    <h4>Solution 2: Using a subquery with NOT EXISTS</h4>
+    <pre>
+SELECT r.retailName, 
+       (SELECT c.commission FROM Commission c WHERE c.retailId = r.retailId) AS commission
+FROM Retailer r
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM Commission c 
+    WHERE c.retailId = r.retailId AND c.commission >= 1500
+);
+</pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 2:</strong></p>
+        <p>
+        This solution uses a subquery to get the commission and another subquery with NOT EXISTS to 
+        filter out retailers with commissions greater than or equal to 1500.</p>
+    </div>
+
+    <h4>Solution 3: Using UNION for better performance with large datasets</h4>
+    <pre>
+SELECT r.retailName, c.commission
+FROM Retailer r
+INNER JOIN Commission c ON r.retailId = c.retailId
+WHERE c.commission < 1500
+
+UNION
+
+SELECT r.retailName, NULL AS commission
+FROM Retailer r
+WHERE r.retailId NOT IN (SELECT c.retailId FROM Commission c);
+</pre>
+
+    <div class="explanation">
+        <p><strong>Explanation 3:</strong></p>
+        <p>
+        This solution uses UNION to combine two queries:
+        1. Retailers with commissions less than 1500
+        2. Retailers with no commission records</p>
+        
+        <p>This approach can be more efficient for large datasets because it avoids scanning the entire Commission table for each row in Retailer.</p>
+    </div>
+</div> <!-- solutions section -->
