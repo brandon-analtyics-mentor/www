@@ -1,0 +1,106 @@
+<h2>Admission to an Amusement Park Ride</h2>
+
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>
+        You need to determine the last visitor that can board a roller coaster ride without exceeding 
+        the maximum combined height limit of <strong>5000 centimeters</strong>.
+    </p>
+    
+    <p>Table: <code>RideLine</code></p>
+    <pre>
++--------------+------+
+| Column Name  | Type |
++--------------+------+
+| visitor_id   | int  |
+| visitor_name | varchar |
+| height       | int  |
+| position     | int  |
++--------------+------+
+    </pre>
+    
+    <p><code>visitor_id</code> column contains unique values.<br>
+    This table has information about all visitors waiting to get on a roller coaster ride.<br>
+    The <code>visitor_id</code> and <code>position</code> columns will contain all numbers from 1 to n, where n is the number of rows in the table.<br>
+    <code>position</code> determines the order in which visitors will board the ride, where <code>position=1</code> denotes the first visitor to board and <code>position=n</code> denotes the last visitor to board.<br>
+    <code>height</code> is the height of the visitor in centimeters.</p>
+    
+    <p>There is a line of people waiting to board a roller coaster. However, the roller coaster has a maximum combined height limit of <code>5000</code> centimeters for safety reasons, so there may be some visitors who cannot board.</p>
+    
+    <p>Write a solution to find the <code>visitor_name</code> of the <strong>last visitor</strong> that can get on the ride without exceeding the height limit. The test cases are generated such that the first visitor does not exceed the height limit.</p>
+    
+    <p><strong>Note</strong> that <em>only one</em> visitor can board the ride at any given position.</p>
+</div>
+
+<div class="section">
+    <h3>Example 1</h3>
+    
+    <p><strong>Input:</strong><br>RideLine table:</p>
+    <pre>
++-----------+--------------+--------+----------+
+| visitor_id| visitor_name | height | position |
++-----------+--------------+--------+----------+
+| 1         | Alice        | 165    | 5        |
+| 2         | Bob          | 180    | 3        |
+| 3         | Charlie      | 175    | 4        |
+| 4         | Diana        | 168    | 7        |
+| 5         | Evan         | 172    | 1        |
+| 6         | Frank        | 178    | 2        |
+| 7         | Grace        | 155    | 6        |
++-----------+--------------+--------+----------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++--------------+
+| visitor_name |
++--------------+
+| Grace        |
++--------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>The visitors board the ride in this order: Evan, Frank, Bob, Charlie, Alice, Grace, Diana</li>
+            <li>The cumulative heights are: 172, 350, 530, 705, 870, 1025, 1193</li>
+            <li>As the height limit is 5000 centimeters, all visitors can board the ride.</li>
+            <li>Grace is the last visitor to board without exceeding the height limit.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>Example 2</h3>
+    
+    <p><strong>Input:</strong><br>RideLine table:</p>
+    <pre>
++-----------+--------------+--------+----------+
+| visitor_id| visitor_name | height | position |
++-----------+--------------+--------+----------+
+| 1         | Alice        | 850    | 2        |
+| 2         | Bob          | 910    | 4        |
+| 3         | Charlie      | 1200   | 1        |
+| 4         | Diana        | 760    | 5        |
+| 5         | Evan         | 1030   | 3        |
+| 6         | Frank        | 900    | 6        |
++-----------+--------------+--------+----------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++--------------+
+| visitor_name |
++--------------+
+| Diana        |
++--------------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>The visitors board the ride in this order: Charlie, Alice, Evan, Bob, Diana, Frank</li>
+            <li>The cumulative heights are: 1200, 2050, 3080, 3990, 4750, 5650</li>
+            <li>As the height limit is 5000 centimeters, Frank cannot board the ride.</li>
+            <li>Diana is the last visitor to board without exceeding the height limit.</li>
+        </ul>
+    </div>
+</div>
