@@ -1,0 +1,215 @@
+<h2>Store Sales Pivot SQL Problem</h2>
+    
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>Table: <code>StoreSales</code></p>
+    <pre>
++-------------+---------+
+| Column Name | Type    |
++-------------+---------+
+| store_id    | int     |
+| sales       | int     |
+| quarter     | varchar |
++-------------+---------+
+    </pre>
+    
+    <p>In SQL, (store_id, quarter) is the primary key of this table.<br>
+    The table has information about the sales of each store per quarter.<br>
+    The quarter has values in ["Q1","Q2","Q3","Q4"].</p>
+    
+    <p>Reformat the table such that there is a store_id column and a sales column <strong>for each quarter</strong>.<br>
+    Return the result table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>StoreSales table:</p>
+    <pre>
++----------+-------+---------+
+| store_id | sales | quarter |
++----------+-------+---------+
+| 101      | 45000 | Q1      |
+| 102      | 52000 | Q1      |
+| 103      | 61000 | Q2      |
+| 101      | 48000 | Q2      |
+| 101      | 55000 | Q3      |
+| 102      | 59000 | Q3      |
++----------+-------+---------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++----------+----------+----------+----------+----------+
+| store_id | Q1_Sales | Q2_Sales | Q3_Sales | Q4_Sales |
++----------+----------+----------+----------+----------+
+| 101      | 45000    | 48000    | 55000    | null     |
+| 102      | 52000    | null     | 59000    | null     |
+| 103      | null     | 61000    | null     | null     |
++----------+----------+----------+----------+----------+</pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong> The sales for Q4 are null for all stores as there are no records for Q4 in the input.</p>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- Create the StoreSales table
+CREATE TABLE StoreSales (
+    store_id INT,
+    sales INT,
+    quarter VARCHAR(2),
+    PRIMARY KEY (store_id, quarter)
+);
+
+-- Insert example data
+INSERT INTO StoreSales (store_id, sales, quarter)
+VALUES
+    (101, 45000, 'Q1'),
+    (102, 52000, 'Q1'),
+    (103, 61000, 'Q2'),
+    (101, 48000, 'Q2'),
+    (101, 55000, 'Q3'),
+    (102, 59000, 'Q3');
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Transform the rows in the StoreSales table into columns based on quarter values</li>
+        <li>Ensure each store_id appears only once in the result</li>
+        <li>Create separate columns for each quarter's sales (Q1_Sales, Q2_Sales, Q3_Sales, Q4_Sales)</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use CASE statements with GROUP BY to pivot the data. This approach creates a column for each quarter and uses conditional aggregation to place the sales values in the appropriate columns.</p>
+
+  <p>This is the most portable solution as it works across most SQL databases without requiring special extensions.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>PostgreSQL has a specialized CROSSTAB function in the tablefunc extension that's designed specifically for pivot operations.</p>
+
+  <p>This approach requires enabling the tablefunc extension but provides a cleaner syntax for pivot operations.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 3:</strong></p>
+  
+  <p>We can create a complete matrix of all stores and quarters using a CROSS JOIN, then LEFT JOIN with the actual data.</p>
+
+  <p>This approach ensures all combinations of stores and quarters are represented in the result, even when there's no sales data for specific combinations.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using CASE Statements</h4>
+    <pre>
+SELECT 
+    store_id,
+    MAX(CASE WHEN quarter = 'Q1' THEN sales END) AS Q1_Sales,
+    MAX(CASE WHEN quarter = 'Q2' THEN sales END) AS Q2_Sales,
+    MAX(CASE WHEN quarter = 'Q3' THEN sales END) AS Q3_Sales,
+    MAX(CASE WHEN quarter = 'Q4' THEN sales END) AS Q4_Sales
+FROM 
+    StoreSales
+GROUP BY 
+    store_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses conditional aggregation with CASE statements to pivot the quarter values into columns. For each store_id, we group the rows and use MAX to aggregate the sales values for each quarter.</p>
+
+    <p>The MAX function works here because for each store and quarter combination, there is at most one value (due to the primary key constraint). If a store doesn't have sales for a particular quarter, the corresponding column will have NULL.</p>
+</div>
+
+    <h4>Solution 2: Using CROSSTAB Function</h4>
+    <pre>
+-- Note: This requires the tablefunc extension
+CREATE EXTENSION IF NOT EXISTS tablefunc;
+
+SELECT 
+    * 
+FROM 
+    CROSSTAB(
+        'SELECT store_id, quarter, sales 
+         FROM StoreSales 
+         ORDER BY 1,2',
+        'SELECT DISTINCT quarter FROM StoreSales ORDER BY 1'
+    ) AS ct (
+        store_id INT, 
+        "Q1_Sales" INT, 
+        "Q2_Sales" INT, 
+        "Q3_Sales" INT, 
+        "Q4_Sales" INT
+    );
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses PostgreSQL's CROSSTAB function from the tablefunc extension to create a pivot table. It takes two SQL queries as arguments:</p>
+    <p>1. The first query provides the data to be pivoted (store_id, quarter, sales)</p>
+    <p>2. The second query provides the values for the pivot columns (the distinct quarters)</p>
+
+    <p>The result is defined with column names matching the expected output, with the store_id as the row identifier and separate columns for each quarter's sales.</p>
+</div>
+
+    <h4>Solution 3: Using Pivot with Joins</h4>
+    <pre>
+WITH quarters AS (
+    SELECT 'Q1' AS quarter UNION ALL
+    SELECT 'Q2' UNION ALL
+    SELECT 'Q3' UNION ALL
+    SELECT 'Q4'
+),
+stores AS (
+    SELECT DISTINCT store_id FROM StoreSales
+),
+store_quarters AS (
+    SELECT 
+        s.store_id,
+        q.quarter
+    FROM 
+        stores s
+    CROSS JOIN 
+        quarters q
+)
+SELECT 
+    sq.store_id,
+    MAX(CASE WHEN sq.quarter = 'Q1' THEN ss.sales END) AS Q1_Sales,
+    MAX(CASE WHEN sq.quarter = 'Q2' THEN ss.sales END) AS Q2_Sales,
+    MAX(CASE WHEN sq.quarter = 'Q3' THEN ss.sales END) AS Q3_Sales,
+    MAX(CASE WHEN sq.quarter = 'Q4' THEN ss.sales END) AS Q4_Sales
+FROM 
+    store_quarters sq
+LEFT JOIN 
+    StoreSales ss ON sq.store_id = ss.store_id AND sq.quarter = ss.quarter
+GROUP BY 
+    sq.store_id;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution creates a complete matrix of all stores and all quarters using Common Table Expressions (CTEs) and a CROSS JOIN:</p>
+    <p>1. First, we create a quarters CTE with all possible quarter values</p>
+    <p>2. Next, we create a stores CTE with all distinct store_ids</p>
+    <p>3. Then, we create a store_quarters CTE by cross-joining stores and quarters</p>
+
+    <p>Finally, we LEFT JOIN this complete matrix with the actual StoreSales data and use CASE statements to pivot the quarter values into columns. This approach ensures all quarters are represented in the output even if there's no data for them.</p>
+</div>
+
+</div> <!-- solutions section -->

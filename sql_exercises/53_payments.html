@@ -1,0 +1,241 @@
+<h2>Payments Analysis</h2>
+    
+    <div class="section">
+        <h3>Problem Description</h3>
+        <p>Table: <code>Payments</code></p>
+        <pre>
++---------------+------+
+| Column Name   | Type |
++---------------+------+
+| payment_id    | int  |
+| region        | varchar |
+| status        | enum |
+| value         | int  |
+| payment_date  | date |
++---------------+------+
+        </pre>
+        
+        <p><code>payment_id</code> is the primary key of this table.<br>
+        The table contains information about payment transactions.<br>
+        The <code>status</code> column is an enum of type ["completed", "rejected"].</p>
+        
+        <p>Write an SQL query to find for each month and region, the number of payments and their total value, the number of completed payments and their total value.</p>
+        
+        <p>Return the result table in <strong>any order</strong>.</p>
+    </div>
+    
+    <div class="section">
+        <h3>Example</h3>
+        
+        <p><strong>Input:</strong><br>Payments table:</p>
+        <pre>
++------------+---------------+------------+-------+-------------+
+| payment_id | region        | status     | value | payment_date |
++------------+---------------+------------+-------+-------------+
+| 1          | Europe        | completed  | 120   | 2023-01-15  |
+| 2          | Europe        | rejected   | 45    | 2023-01-20  |
+| 3          | North America | completed  | 200   | 2023-01-25  |
+| 4          | Asia          | completed  | 85    | 2023-01-30  |
+| 5          | Europe        | completed  | 150   | 2023-02-10  |
+| 6          | Asia          | rejected   | 65    | 2023-02-12  |
+| 7          | North America | completed  | 180   | 2023-02-15  |
++------------+---------------+------------+-------+-------------+</pre>
+        
+        <p><strong>Output:</strong></p>
+        <pre>
++--------+---------------+---------------+------------+-------------------+----------------+
+| month  | region        | total_payments | total_value | completed_payments | completed_value |
++--------+---------------+---------------+------------+-------------------+----------------+
+| 2023-01| Europe        | 2             | 165        | 1                 | 120            |
+| 2023-01| North America | 1             | 200        | 1                 | 200            |
+| 2023-01| Asia          | 1             | 85         | 1                 | 85             |
++--------+---------------+---------------+------------+-------------------+----------------+</pre>
+        
+        <div class="explanation">
+            <p><strong>Explanation:</strong></p>
+            <ul>
+                <li>For Europe in January 2023, there were 2 payments with a total value of 165, of which 1 was completed with a value of 120.</li>
+                <li>For North America in January 2023, there was 1 payment with a total value of 200, which was completed.</li>
+                <li>For Asia in January 2023, there was 1 payment with a total value of 85, which was completed.</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h3>PostgreSQL Setup Code</h3>
+        <pre>
+-- create the payments table
+create table payments (
+    payment_id int primary key,
+    region varchar,
+    status varchar,
+    value int,
+    payment_date date
+);
+
+-- insert example data
+insert into payments (payment_id, region, status, value, payment_date) values
+(1, 'Europe', 'completed', 120, '2023-01-15'),
+(2, 'Europe', 'rejected', 45, '2023-01-20'),
+(3, 'North America', 'completed', 200, '2023-01-25'),
+(4, 'Asia', 'completed', 85, '2023-01-30'),
+(5, 'Europe', 'completed', 150, '2023-02-10'),
+(6, 'Asia', 'rejected', 65, '2023-02-12'),
+(7, 'North America', 'completed', 180, '2023-02-15');
+</pre>
+    </div>
+    
+    <h3>Restating and Approaching the Problem</h3>
+    <p>
+        To solve this problem, we need to:
+        <ul>
+            <li>Group the data by month and region</li>
+            <li>Calculate the total number of payments and their total value for each group</li>
+            <li>Calculate the number of completed payments and their total value for each group</li>
+        </ul>
+    </p>
+
+    <div class="explanation">
+      <p><strong>Approach 1:</strong></p>
+      
+      <p>We can use the GROUP BY clause to group the data by month and region. To extract the month from the payment_date, we'll use the TO_CHAR() function.</p>
+
+      <p>For each group, we'll count the total number of payments and sum their values. To count and sum only the completed payments, we can use conditional expressions.</p>
+    </div>
+
+    <div class="explanation">
+      <p><strong>Approach 2:</strong></p>
+      
+      <p>We can use Common Table Expressions (CTEs) to first group all payments by month and region, and then join this with a second CTE that contains only completed payments.</p>
+
+      <p>This approach separates the calculations for total payments and completed payments, which might make the query more readable.</p>
+    </div>
+
+    <div class="section solutions-section">
+        <h3>Solutions</h3>
+        
+        <h4>Solution 1: Using Conditional Aggregation</h4>
+        <pre>
+SELECT
+    TO_CHAR(payment_date, 'YYYY-MM') AS month,
+    region,
+    COUNT(*) AS total_payments,
+    SUM(value) AS total_value,
+    COUNT(CASE WHEN status = 'completed' THEN 1 END) AS completed_payments,
+    SUM(CASE WHEN status = 'completed' THEN value ELSE 0 END) AS completed_value
+FROM
+    payments
+GROUP BY
+    TO_CHAR(payment_date, 'YYYY-MM'),
+    region
+ORDER BY
+    month, region;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses conditional aggregation to calculate both total and completed payment statistics in a single query:
+    </p>
+    <ul>
+        <li>TO_CHAR(payment_date, 'YYYY-MM') extracts the year and month from the payment date</li>
+        <li>COUNT(*) counts all payments in each group</li>
+        <li>SUM(value) calculates the total value of all payments</li>
+        <li>COUNT(CASE WHEN status = 'completed' THEN 1 END) counts only completed payments</li>
+        <li>SUM(CASE WHEN status = 'completed' THEN value ELSE 0 END) sums the values of only completed payments</li>
+    </ul>
+    <p>The GROUP BY clause groups the results by month and region, and the ORDER BY clause sorts the results.</p>
+</div>
+
+        <h4>Solution 2: Using Common Table Expressions</h4>
+        <pre>
+WITH all_payments AS (
+    SELECT
+        TO_CHAR(payment_date, 'YYYY-MM') AS month,
+        region,
+        COUNT(*) AS total_payments,
+        SUM(value) AS total_value
+    FROM
+        payments
+    GROUP BY
+        TO_CHAR(payment_date, 'YYYY-MM'),
+        region
+),
+completed_payments AS (
+    SELECT
+        TO_CHAR(payment_date, 'YYYY-MM') AS month,
+        region,
+        COUNT(*) AS completed_payments,
+        SUM(value) AS completed_value
+    FROM
+        payments
+    WHERE
+        status = 'completed'
+    GROUP BY
+        TO_CHAR(payment_date, 'YYYY-MM'),
+        region
+)
+
+SELECT
+    a.month,
+    a.region,
+    a.total_payments,
+    a.total_value,
+    COALESCE(c.completed_payments, 0) AS completed_payments,
+    COALESCE(c.completed_value, 0) AS completed_value
+FROM
+    all_payments a
+LEFT JOIN
+    completed_payments c
+    ON a.month = c.month AND a.region = c.region
+ORDER BY
+    a.month, a.region;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses two Common Table Expressions (CTEs) to calculate the statistics separately:
+    </p>
+    <ul>
+        <li>The first CTE, all_payments, calculates total payments statistics</li>
+        <li>The second CTE, completed_payments, calculates statistics for completed payments only</li>
+        <li>The main query joins these two CTEs to produce the final result</li>
+        <li>COALESCE is used to handle cases where there might be no completed payments for a particular month and region</li>
+    </ul>
+    <p>This approach makes the query more modular and potentially easier to understand, especially for complex aggregations.</p>
+</div>
+
+        <h4>Solution 3: Using DATE_TRUNC for More Flexible Date Handling</h4>
+        <pre>
+SELECT
+    TO_CHAR(DATE_TRUNC('month', payment_date), 'YYYY-MM') AS month,
+    region,
+    COUNT(*) AS total_payments,
+    SUM(value) AS total_value,
+    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_payments,
+    SUM(CASE WHEN status = 'completed' THEN value ELSE 0 END) AS completed_value
+FROM
+    payments
+GROUP BY
+    DATE_TRUNC('month', payment_date),
+    region
+ORDER BY
+    month, region;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses DATE_TRUNC to truncate the payment date to the month level, which can be more robust than using TO_CHAR for grouping:
+    </p>
+    <ul>
+        <li>DATE_TRUNC('month', payment_date) truncates the date to the first day of the month</li>
+        <li>We still use TO_CHAR to format the output as 'YYYY-MM'</li>
+        <li>Using DATE_TRUNC for grouping ensures that dates are properly grouped by month</li>
+        <li>This approach can be more efficient for indexing and can handle different date formats more consistently</li>
+    </ul>
+    <p>This solution combines the clarity of conditional aggregation with more robust date handling using PostgreSQL's specialized date functions.</p>
+</div>
+
+    </div> <!-- solutions section -->
