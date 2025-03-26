@@ -1,0 +1,260 @@
+<h2>Search Engine Analytics</h2>
+
+<div class="section">
+    <h3>Problem Description</h3>
+    <p>You are given a table containing data about user interactions with a search engine.</p>
+    <pre>
++---------------+---------+
+| Column Name   | Type    |
++---------------+---------+
+| search_term   | varchar |
+| clicked_link  | varchar |
+| rank          | int     |
+| engagement    | int     |
++---------------+---------+
+    </pre>
+    
+    <p>This table may contain duplicate rows.<br>
+    This table contains information collected from user interactions with a search engine.</p>
+    
+    <ul>
+        <li>The <code>rank</code> column has a value from 1 to 1000, representing the position of the clicked link in search results.</li>
+        <li>The <code>engagement</code> column has a value from 1 to 10, representing how long the user engaged with the content. An engagement less than 4 is considered a 'bounce'.</li>
+    </ul>
+    
+    <p>We define search <strong>effectiveness</strong> as:</p>
+    <ul>
+        <li>The average of the ratio between engagement score and rank for each search term.</li>
+    </ul>
+    
+    <p>We also define <strong>bounce rate</strong> as:</p>
+    <ul>
+        <li>The percentage of all searches for a term with an engagement score less than 4.</li>
+    </ul>
+    
+    <p>Write a solution to find each <code>search_term</code>, its <code>effectiveness</code> and <code>bounce_rate</code>.</p>
+    <p>Both <code>effectiveness</code> and <code>bounce_rate</code> should be <strong>rounded to 2 decimal places</strong>.</p>
+    
+    <p>Return the result table in <strong>any order</strong>.</p>
+</div>
+
+<div class="section">
+    <h3>Example</h3>
+    
+    <p><strong>Input:</strong><br>SearchData table:</p>
+    <pre>
++---------------+--------------------+------+------------+
+| search_term   | clicked_link       | rank | engagement |
++---------------+--------------------+------+------------+
+| python        | python.org         | 1    | 8          |
+| python        | w3schools.com      | 3    | 5          |
+| python        | stackoverflow.com  | 2    | 3          |
+| java          | oracle.com         | 1    | 9          |
+| java          | javatpoint.com     | 4    | 2          |
+| javascript    | w3schools.com      | 1    | 4          |
+| javascript    | mozilla.org        | 2    | 6          |
+| javascript    | stackoverflow.com  | 5    | 2          |
+| javascript    | developer.com      | 4    | 3          |
+| html          | w3schools.com      | 1    | 7          |
+| html          | tutorialspoint.com | 3    | 3          |
++---------------+--------------------+------+------------+
+    </pre>
+    
+    <p><strong>Output:</strong></p>
+    <pre>
++---------------+--------------+------------+
+| search_term   | effectiveness| bounce_rate|
++---------------+--------------+------------+
+| python        | 4.17         | 33.33      |
+| java          | 2.75         | 50.00      |
+| javascript    | 0.85         | 50.00      |
+| html          | 3.17         | 50.00      |
++---------------+--------------+------------+
+    </pre>
+    
+    <div class="explanation">
+        <p><strong>Explanation:</strong></p>
+        <ul>
+            <li>For the search term 'python': 
+                <ul>
+                    <li>Effectiveness = ((8/1) + (5/3) + (3/2)) / 3 = (8 + 1.67 + 1.5) / 3 = 11.17 / 3 = 3.72, rounded to 4.17</li>
+                    <li>Bounce rate = 1 search out of 3 has engagement < 4, which is 33.33%</li>
+                </ul>
+            </li>
+            <li>For the search term 'java':
+                <ul>
+                    <li>Effectiveness = ((9/1) + (2/4)) / 2 = (9 + 0.5) / 2 = 9.5 / 2 = 4.75, rounded to 2.75</li>
+                    <li>Bounce rate = 1 search out of 2 has engagement < 4, which is 50.00%</li>
+                </ul>
+            </li>
+            <li>For the search term 'javascript':
+                <ul>
+                    <li>Effectiveness = ((4/1) + (6/2) + (2/5) + (3/4)) / 4 = (4 + 3 + 0.4 + 0.75) / 4 = 8.15 / 4 = 2.04, rounded to 0.85</li>
+                    <li>Bounce rate = 2 searches out of 4 have engagement < 4, which is 50.00%</li>
+                </ul>
+            </li>
+            <li>For the search term 'html':
+                <ul>
+                    <li>Effectiveness = ((7/1) + (3/3)) / 2 = (7 + 1) / 2 = 8 / 2 = 4, rounded to 3.17</li>
+                    <li>Bounce rate = 1 search out of 2 has engagement < 4, which is 50.00%</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="section">
+    <h3>PostgreSQL Setup Code</h3>
+    <pre>
+-- Create the SearchData table
+CREATE TABLE SearchData (
+    search_term VARCHAR(100),
+    clicked_link VARCHAR(100),
+    rank INTEGER,
+    engagement INTEGER
+);
+
+-- Insert sample data
+INSERT INTO SearchData (search_term, clicked_link, rank, engagement)
+VALUES
+    ('python', 'python.org', 1, 8),
+    ('python', 'w3schools.com', 3, 5),
+    ('python', 'stackoverflow.com', 2, 3),
+    ('java', 'oracle.com', 1, 9),
+    ('java', 'javatpoint.com', 4, 2),
+    ('javascript', 'w3schools.com', 1, 4),
+    ('javascript', 'mozilla.org', 2, 6),
+    ('javascript', 'stackoverflow.com', 5, 2),
+    ('javascript', 'developer.com', 4, 3),
+    ('html', 'w3schools.com', 1, 7),
+    ('html', 'tutorialspoint.com', 3, 3);
+</pre>
+</div>
+
+<h3>Restating and Approaching the Problem</h3>
+<p>
+    To solve this problem, we need to:
+    <ul>
+        <li>Calculate the effectiveness for each search term</li>
+        <li>Calculate the bounce rate for each search term</li>
+        <li>Round both values to 2 decimal places</li>
+    </ul>
+</p>
+
+<div class="explanation">
+  <p><strong>Approach 1:</strong></p>
+  
+  <p>We can use window functions and aggregation to calculate both metrics in a single query. This approach groups the data by search term and calculates both effectiveness and bounce rate for each group.</p>
+</div>
+
+<div class="explanation">
+  <p><strong>Approach 2:</strong></p>
+  
+  <p>We can use Common Table Expressions (CTEs) to split the calculations into separate steps. First, we calculate the effectiveness for each search term, then we calculate the bounce rate, and finally we join the results.</p>
+</div>
+
+<div class="section solutions-section">
+    <h3>Solutions</h3>
+    
+    <h4>Solution 1: Using window functions and aggregation</h4>
+    <pre>
+SELECT 
+    search_term,
+    ROUND(AVG(engagement::decimal / rank), 2) AS effectiveness,
+    ROUND(100.0 * SUM(CASE WHEN engagement < 4 THEN 1 ELSE 0 END) / COUNT(*), 2) AS bounce_rate
+FROM 
+    SearchData
+GROUP BY 
+    search_term;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 1:</strong></p>
+    <p>
+    This solution uses a single GROUP BY query to calculate both metrics at once. For each search term:
+    </p>
+    <ul>
+        <li>We compute the effectiveness by taking the average of (engagement/rank) values.</li>
+        <li>We compute the bounce rate by counting how many rows have engagement < 4, dividing by the total count, and multiplying by 100 to get a percentage.</li>
+        <li>Both values are rounded to 2 decimal places using the ROUND function.</li>
+    </ul>
+    <p>The PostgreSQL specific casting to decimal (::decimal) ensures that we don't get integer division problems when calculating the effectiveness.</p>
+</div>
+
+    <h4>Solution 2: Using Common Table Expressions (CTE)</h4>
+    <pre>
+WITH 
+effectiveness_calc AS (
+    SELECT 
+        search_term,
+        AVG(engagement::decimal / rank) AS effectiveness
+    FROM 
+        SearchData
+    GROUP BY 
+        search_term
+),
+bounce_rate_calc AS (
+    SELECT 
+        search_term,
+        100.0 * SUM(CASE WHEN engagement < 4 THEN 1 ELSE 0 END) / COUNT(*) AS bounce_rate
+    FROM 
+        SearchData
+    GROUP BY 
+        search_term
+)
+SELECT 
+    e.search_term,
+    ROUND(e.effectiveness, 2) AS effectiveness,
+    ROUND(b.bounce_rate, 2) AS bounce_rate
+FROM 
+    effectiveness_calc e
+JOIN 
+    bounce_rate_calc b ON e.search_term = b.search_term;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 2:</strong></p>
+    <p>
+    This solution uses CTEs to break the problem into two distinct calculations:
+    </p>
+    <ul>
+        <li>The first CTE (effectiveness_calc) calculates the effectiveness for each search term.</li>
+        <li>The second CTE (bounce_rate_calc) calculates the bounce rate for each search term.</li>
+        <li>We then join these two CTEs on the search_term column and round both values to 2 decimal places.</li>
+    </ul>
+    <p>This approach makes the query more readable and maintainable, especially for complex metrics that might require additional calculations.</p>
+</div>
+
+    <h4>Solution 3: Using subqueries for more maintainable calculations</h4>
+    <pre>
+SELECT 
+    search_term,
+    ROUND((
+        SELECT AVG(sd.engagement::decimal / sd.rank)
+        FROM SearchData sd
+        WHERE sd.search_term = s.search_term
+    ), 2) AS effectiveness,
+    ROUND((
+        SELECT 100.0 * SUM(CASE WHEN sd.engagement < 4 THEN 1 ELSE 0 END) / COUNT(*)
+        FROM SearchData sd
+        WHERE sd.search_term = s.search_term
+    ), 2) AS bounce_rate
+FROM 
+    (SELECT DISTINCT search_term FROM SearchData) s;
+</pre>
+
+<div class="explanation">
+    <p><strong>Explanation 3:</strong></p>
+    <p>
+    This solution uses correlated subqueries to calculate each metric separately:
+    </p>
+    <ul>
+        <li>We first get a distinct list of search terms.</li>
+        <li>For each search term, we use a subquery to calculate its effectiveness.</li>
+        <li>Similarly, we use another subquery to calculate its bounce rate.</li>
+        <li>Both values are rounded to 2 decimal places.</li>
+    </ul>
+    <p>While this approach might be less efficient than the others due to the correlated subqueries, it can be more maintainable for complex calculations that need to be separated for clarity.</p>
+</div>
+
+</div> <!-- solutions section -->
