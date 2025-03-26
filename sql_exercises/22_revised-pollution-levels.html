@@ -2,7 +2,7 @@
     
 <div class="section">
     <h3>Problem Description</h3>
-    <p>Table: <code>AirQuality</code></p>
+    <p>Table: <code>air_quality</code></p>
     <pre>
 +---------------+---------+
 | Column Name   | Type    |
@@ -25,7 +25,7 @@
 <div class="section">
     <h3>Example</h3>
     
-    <p><strong>Input:</strong><br>AirQuality table:</p>
+    <p><strong>Input:</strong><br>air_quality table:</p>
     <pre>
 +------------+------------+------------+
 | reading_id | sample_date| pollution  |
@@ -59,15 +59,15 @@
 <div class="section">
     <h3>PostgreSQL Setup Code</h3>
     <pre>
--- create the airquality table
-create table airquality (
+-- create the air_quality table
+create table air_quality (
     reading_id int primary key,
     sample_date date,
     pollution int
 );
 
 -- insert example data
-insert into airquality (reading_id, sample_date, pollution) values
+insert into air_quality (reading_id, sample_date, pollution) values
 (1, '2023-08-10', 35),
 (2, '2023-08-11', 42),
 (3, '2023-08-12', 38),
@@ -107,23 +107,24 @@ insert into airquality (reading_id, sample_date, pollution) values
     
     <h4>Solution 1: Using Self-Join</h4>
     <pre>
-SELECT 
-    current.reading_id
-FROM 
-    airquality current
-JOIN 
-    airquality previous
-ON 
-    current.sample_date = previous.sample_date + INTERVAL '1 day'
-WHERE 
-    current.pollution > previous.pollution
+select 
+    c.reading_id
+    
+from 
+  airquality c -- current day
+
+    join airquality p -- previous day
+       on  c.sample_date = p.sample_date + interval '1 day'
+
+where 
+    c.pollution > p.pollution
 ;
 </pre>
 
 <div class="explanation">
     <p><strong>Explanation 1:</strong></p>
     <p>
-    This solution uses a self-join to pair each day with its previous day. We join the AirQuality table with itself where one record's sample_date is exactly one day after another record's sample_date.</p>
+    This solution uses a self-join to pair each day with its previous day. We join the air_quality table with itself where one record's sample_date is exactly one day after another record's sample_date.</p>
 
     <p>Then we filter for cases where the current day's pollution level is higher than the previous day's pollution level. The query returns the reading_id of these records.</p>
 </div>
@@ -139,7 +140,7 @@ FROM
             pollution,
             LAG(pollution) OVER (ORDER BY sample_date) AS prev_pollution
         FROM 
-            airquality
+            air_quality
     ) subquery
 WHERE 
     pollution > prev_pollution
@@ -162,7 +163,7 @@ WITH pollution_comparison AS (
         pollution,
         LAG(pollution) OVER (ORDER BY sample_date) AS prev_pollution
     FROM 
-        airquality
+        air_quality
 )
 
 SELECT 
