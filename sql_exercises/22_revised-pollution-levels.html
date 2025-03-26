@@ -131,19 +131,21 @@ where
 
     <h4>Solution 2: Using Window Functions</h4>
     <pre>
-SELECT 
-    reading_id
-FROM 
+select 
+    c.reading_id
+    
+from 
     (
-        SELECT 
-            reading_id,
-            pollution,
-            LAG(pollution) OVER (ORDER BY sample_date) AS prev_pollution
-        FROM 
-            air_quality
-    ) subquery
-WHERE 
-    pollution > prev_pollution
+      select 
+          a.reading_id
+        , a.pollution
+        , lag(a.pollution) over (order by a.sample_date) as prev_pollution
+      from 
+          air_quality a
+    ) p
+
+where 
+    p.pollution > p.prev_pollution
 ;
 </pre>
 
@@ -155,34 +157,6 @@ WHERE
     <p>Then we filter for cases where the current pollution level is higher than the previous day's pollution level. The query returns the reading_id of these records.</p>
 </div>
 
-    <h4>Solution 3: Using a CTE with Window Function</h4>
-    <pre>
-WITH pollution_comparison AS (
-    SELECT 
-        reading_id,
-        pollution,
-        LAG(pollution) OVER (ORDER BY sample_date) AS prev_pollution
-    FROM 
-        air_quality
-)
 
-SELECT 
-    reading_id
-FROM 
-    pollution_comparison
-WHERE 
-    pollution > prev_pollution
-;
-</pre>
-
-<div class="explanation">
-    <p><strong>Explanation 3:</strong></p>
-    <p>
-    This solution is similar to Solution 2 but uses a Common Table Expression (CTE) for better readability. The CTE named pollution_comparison contains each reading's pollution level and the pollution level from the previous day.</p>
-
-    <p>Then we select the reading_id from the CTE where the current pollution level is higher than the previous day's pollution level.</p>
-
-    <p>This approach improves code organization and makes the query intent clearer, which is beneficial for maintenance and understanding.</p>
-</div>
 
 </div> <!-- solutions section -->
